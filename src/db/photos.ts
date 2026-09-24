@@ -1,7 +1,7 @@
 import { newId } from '../lib/id'
 import { nowIso } from '../lib/time'
 import { db } from './db'
-import { NotFoundError, PhotoLimitError, ValidationError } from './errors'
+import { RecordNotFoundError, PhotoLimitError, ValidationError } from './errors'
 import { MAX_PHOTOS_PER_SHOP, type Photo, type PhotoInput } from './types'
 
 function checkPhotoInput(input: PhotoInput): void {
@@ -16,13 +16,13 @@ function checkPhotoInput(input: PhotoInput): void {
 
 /**
  * Save a photo (already resized) and append it to the end of shop.photoIds, in one transaction.
- * Throws NotFoundError if the shop does not exist, PhotoLimitError if it already has 3 photos.
+ * Throws RecordNotFoundError if the shop does not exist, PhotoLimitError if it already has 3 photos.
  */
 export async function addPhoto(shopId: string, input: PhotoInput): Promise<Photo> {
   checkPhotoInput(input)
   return db.transaction('rw', db.shops, db.photos, async () => {
     const shop = await db.shops.get(shopId)
-    if (!shop) throw new NotFoundError(`shop not found: ${shopId}`)
+    if (!shop) throw new RecordNotFoundError(`shop not found: ${shopId}`)
     if (shop.photoIds.length >= MAX_PHOTOS_PER_SHOP) {
       throw new PhotoLimitError(`a shop can have at most ${MAX_PHOTOS_PER_SHOP} photos`)
     }
@@ -67,7 +67,7 @@ export async function removePhoto(photoId: string): Promise<boolean> {
 export async function reorderPhotos(shopId: string, orderedIds: string[]): Promise<void> {
   await db.transaction('rw', db.shops, async () => {
     const shop = await db.shops.get(shopId)
-    if (!shop) throw new NotFoundError(`shop not found: ${shopId}`)
+    if (!shop) throw new RecordNotFoundError(`shop not found: ${shopId}`)
     const current = new Set(shop.photoIds)
     const sameSet =
       Array.isArray(orderedIds) &&

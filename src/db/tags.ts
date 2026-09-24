@@ -2,7 +2,7 @@ import { newId } from '../lib/id'
 import { normalizeTagKey } from '../lib/tagKey'
 import { nowIso } from '../lib/time'
 import { db } from './db'
-import { NotFoundError, TagConflictError, ValidationError } from './errors'
+import { RecordNotFoundError, TagConflictError, ValidationError } from './errors'
 import { tagFieldFor } from './tagFields'
 import { TAG_KINDS, type Tag, type TagKind } from './types'
 
@@ -63,7 +63,7 @@ export async function renameTag(id: string, newName: string): Promise<Tag> {
   const key = keyOf(newName)
   return db.transaction('rw', db.tags, async () => {
     const tag = await db.tags.get(id)
-    if (!tag) throw new NotFoundError(`tag not found: ${id}`)
+    if (!tag) throw new RecordNotFoundError(`tag not found: ${id}`)
     const other = await findByKey(tag.kind, key)
     if (other && other.id !== id) {
       throw new TagConflictError(`a ${tag.kind} tag with the same name already exists`, other.id)
@@ -83,8 +83,8 @@ export async function mergeTags(fromId: string, toId: string): Promise<void> {
   if (fromId === toId) throw new ValidationError('cannot merge a tag into itself')
   await db.transaction('rw', db.shops, db.tags, async () => {
     const [from, to] = await db.tags.bulkGet([fromId, toId])
-    if (!from) throw new NotFoundError(`tag not found: ${fromId}`)
-    if (!to) throw new NotFoundError(`tag not found: ${toId}`)
+    if (!from) throw new RecordNotFoundError(`tag not found: ${fromId}`)
+    if (!to) throw new RecordNotFoundError(`tag not found: ${toId}`)
     if (from.kind !== to.kind) throw new ValidationError('can only merge tags of the same kind')
     const field = tagFieldFor(from.kind)
     const now = nowIso()
@@ -128,8 +128,8 @@ export async function listTags(kind?: TagKind): Promise<Tag[]> {
 async function changeShopTag(shopId: string, tagId: string, attach: boolean): Promise<void> {
   await db.transaction('rw', db.shops, db.tags, async () => {
     const [shop, tag] = await Promise.all([db.shops.get(shopId), db.tags.get(tagId)])
-    if (!shop) throw new NotFoundError(`shop not found: ${shopId}`)
-    if (!tag) throw new NotFoundError(`tag not found: ${tagId}`)
+    if (!shop) throw new RecordNotFoundError(`shop not found: ${shopId}`)
+    if (!tag) throw new RecordNotFoundError(`tag not found: ${tagId}`)
     const field = tagFieldFor(tag.kind)
     const has = shop[field].includes(tagId)
     if (attach === has) return

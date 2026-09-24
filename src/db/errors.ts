@@ -8,11 +8,15 @@ export class ValidationError extends Error {
   }
 }
 
-/** The target record does not exist. */
-export class NotFoundError extends Error {
+/**
+ * The target record does not exist.
+ * (Not named "NotFoundError": Dexie converts errors with DOMException names such as
+ * NotFoundError / ConstraintError into its own DexieError, losing the class.)
+ */
+export class RecordNotFoundError extends Error {
   constructor(message: string) {
     super(message)
-    this.name = 'NotFoundError'
+    this.name = 'RecordNotFoundError'
   }
 }
 

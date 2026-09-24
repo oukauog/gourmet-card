@@ -2,7 +2,7 @@ import { newId } from '../lib/id'
 import { isValidRating } from '../lib/rating'
 import { nowIso } from '../lib/time'
 import { db } from './db'
-import { NotFoundError, ValidationError } from './errors'
+import { RecordNotFoundError, ValidationError } from './errors'
 import { TAG_FIELDS } from './tagFields'
 import {
   SHOP_ORIGINS,
@@ -57,7 +57,7 @@ async function cleanTagIds(kind: TagKind, value: unknown): Promise<string[]> {
   const ids = [...new Set(value as string[])]
   const tags = await db.tags.bulkGet(ids)
   tags.forEach((tag, i) => {
-    if (!tag) throw new NotFoundError(`tag not found: ${ids[i]}`)
+    if (!tag) throw new RecordNotFoundError(`tag not found: ${ids[i]}`)
     if (tag.kind !== kind) throw new ValidationError(`tag ${ids[i]} is not a ${kind} tag`)
   })
   return ids
@@ -123,7 +123,7 @@ export async function updateShop(id: string, patch: ShopPatch): Promise<Shop> {
   }
   return db.transaction('rw', db.shops, db.tags, async () => {
     const shop = await db.shops.get(id)
-    if (!shop) throw new NotFoundError(`shop not found: ${id}`)
+    if (!shop) throw new RecordNotFoundError(`shop not found: ${id}`)
     await applyFields(shop, patch)
     shop.updatedAt = nowIso()
     await db.shops.put(shop)
