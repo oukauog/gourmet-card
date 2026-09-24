@@ -1,11 +1,9 @@
-import { useCallback, useEffect, useLayoutEffect, useState, type CSSProperties } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useState, type CSSProperties } from 'react'
 import { ShopTile } from '../components/ShopTile'
 import { getPhoto } from '../db/photos'
 import { getSetting, setSetting } from '../db/settings'
 import { listShops } from '../db/shops'
 import type { Shop } from '../db/types'
-import { DevSampleBar } from '../dev/DevSampleBar'
-import { loadTileVariant, saveTileVariant, type TileVariant } from '../dev/sampleVariant'
 import '../styles/home.css'
 
 interface Props {
@@ -22,6 +20,12 @@ interface Row {
 type Columns = 2 | 3
 const DEFAULT_COLUMNS: Columns = 3
 const SKELETON_COUNT = 9
+
+// DEV only: sample data buttons. Loaded lazily and only in dev, so neither its JS nor its CSS
+// is part of the production build.
+const DevSampleBar = import.meta.env.DEV
+  ? lazy(() => import('../dev/DevSampleBar').then((m) => ({ default: m.DevSampleBar })))
+  : null
 
 // Last list and scroll position, so coming back from a shop page shows the list at once
 // (no blank / skeleton flash) at the same place, while a fresh load runs in the background.
@@ -42,8 +46,6 @@ async function loadRows(): Promise<Row[]> {
 export function HomeScreen({ onAdd, onOpenShop }: Props) {
   const [rows, setRows] = useState<Row[] | undefined>(lastRows)
   const [columns, setColumns] = useState<Columns | undefined>(lastColumns)
-  // Look comparison (DEV only; fixed in construction 3a). Production always uses a1.
-  const [variant, setVariant] = useState<TileVariant>(() => (import.meta.env.DEV ? loadTileVariant() : 'a1'))
 
   const reload = useCallback(async () => {
     const next = await loadRows()
@@ -81,33 +83,34 @@ export function HomeScreen({ onAdd, onOpenShop }: Props) {
     void setSetting('columns', next)
   }
 
-  const changeVariant = (v: TileVariant) => {
-    setVariant(v)
-    saveTileVariant(v)
-  }
-
   const cols = columns ?? DEFAULT_COLUMNS
+  const nextCols: Columns = cols === 3 ? 2 : 3
   const gridStyle = { '--cols': cols } as CSSProperties
 
   return (
-    <div className={`screen home-screen tiles-${variant} cols-${cols}`}>
+    <div className={`screen home-screen cols-${cols}`}>
       <header className="topbar home-topbar">
         <h1 className="topbar-title home-title">グルメカード</h1>
         <button
           type="button"
           className="btn cols-toggle"
-          aria-label={`${cols === 3 ? 2 : 3}列表示に切り替え`}
+          aria-label={`${nextCols}列表示に切り替え`}
           onClick={toggleColumns}
           disabled={columns === undefined}
         >
-          <ColumnsIcon cols={cols} />
-          <span>{cols}列</span>
+          {/* shows the RESULT of tapping (the next column count) */}
+          <ColumnsIcon cols={nextCols} />
+          <span>{nextCols}列にする</span>
         </button>
       </header>
 
       {/* Future: tabs (手札/行きたい) and the filter bar go here (construction 6). */}
 
-      {import.meta.env.DEV && <DevSampleBar variant={variant} onVariant={changeVariant} onDataChanged={() => void reload()} />}
+      {DevSampleBar && (
+        <Suspense fallback={null}>
+          <DevSampleBar onDataChanged={() => void reload()} />
+        </Suspense>
+      )}
 
       {rows && columns && rows.length === 0 && <p className="empty">＋から最初のお店を登録</p>}
 
@@ -129,7 +132,7 @@ export function HomeScreen({ onAdd, onOpenShop }: Props) {
   )
 }
 
-/** Small grid icon showing the current column count. */
+/** Small grid icon with `cols` x `cols` cells. */
 function ColumnsIcon({ cols }: { cols: Columns }) {
   const size = cols === 3 ? 4 : 6.5
   const gap = cols === 3 ? 1.5 : 2

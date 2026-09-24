@@ -1,0 +1,29 @@
+/* DEV ONLY: sample data bar (imported by DevSampleBar; not in production). */
+.dev-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 10px;
+  padding: 6px 8px;
+  border: 1px dashed #c9c4bc;
+  border-radius: 10px;
+  font-size: 13px;
+}
+.dev-bar-label {
+  color: var(--c-sub);
+}
+.dev-chip {
+  min-height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--c-line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--c-text);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.dev-chip:disabled {
+  opacity: 0.5;
+}

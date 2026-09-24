@@ -1,16 +1,14 @@
-// DEV ONLY (construction 3 look comparison; removed in construction 3a).
-// Rendered behind `import.meta.env.DEV`, so it is dropped from the production build.
+// DEV ONLY: sample data buttons for checking the list with many shops.
+// Lazily imported behind `import.meta.env.DEV` (HomeScreen), so it is not in the production build.
 import { useState } from 'react'
 import { addSampleShops, removeSampleShops } from './sampleData'
-import type { TileVariant } from './sampleVariant'
+import './devBar.css'
 
 interface Props {
-  variant: TileVariant
-  onVariant: (v: TileVariant) => void
   onDataChanged: () => void
 }
 
-export function DevSampleBar({ variant, onVariant, onDataChanged }: Props) {
+export function DevSampleBar({ onDataChanged }: Props) {
   const [busy, setBusy] = useState(false)
 
   const run = async (job: () => Promise<unknown>) => {
@@ -25,18 +23,7 @@ export function DevSampleBar({ variant, onVariant, onDataChanged }: Props) {
 
   return (
     <div className="dev-bar" data-testid="dev-sample-bar">
-      <span className="dev-bar-label">見本:</span>
-      {(['a1', 'a2'] as const).map((v) => (
-        <button
-          key={v}
-          type="button"
-          className="dev-chip"
-          aria-pressed={variant === v}
-          onClick={() => onVariant(v)}
-        >
-          {v.toUpperCase()}
-        </button>
-      ))}
+      <span className="dev-bar-label">開発用:</span>
       <button type="button" className="dev-chip" disabled={busy} onClick={() => void run(addSampleShops)}>
         見本用に増やす
       </button>

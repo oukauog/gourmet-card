@@ -106,10 +106,10 @@ test('register a shop with 2 photos, keep it after reload, then delete', async (
   expect(shop.photos).toHaveLength(2)
   const [land, png] = shop.photos
   expect([land.large.w, land.large.h]).toEqual([1800, 1200])
-  expect([land.small.w, land.small.h]).toEqual([400, 267])
+  expect([land.small.w, land.small.h]).toEqual([600, 400])
   expect([land.width, land.height]).toEqual([1800, 1200])
   expect([png.large.w, png.large.h]).toEqual([800, 1200]) // not enlarged
-  expect([png.small.w, png.small.h]).toEqual([267, 400])
+  expect([png.small.w, png.small.h]).toEqual([400, 600])
   for (const p of shop.photos) {
     expect(p.large.type).toBe('image/jpeg')
     expect(p.small.type).toBe('image/jpeg')
@@ -160,7 +160,7 @@ test('refuses the 4th photo and keeps the EXIF orientation', async ({ page }) =>
   const exif = shop.photos[1]
   // stored 2000x1500 with Orientation=6 -> displayed portrait 1500x2000 -> 1350x1800
   expect([exif.large.w, exif.large.h]).toEqual([1350, 1800])
-  expect([exif.small.w, exif.small.h]).toEqual([300, 400])
+  expect([exif.small.w, exif.small.h]).toEqual([450, 600])
   // rotated 90deg clockwise: the blue bottom-left quadrant is now top-left (rotated once, not twice)
   const [r, g, b] = exif.large.leftPixel
   expect(b > 150 && r < 100 && g < 150).toBe(true)

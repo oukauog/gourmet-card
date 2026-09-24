@@ -65,13 +65,36 @@ test('register from the tile list; photo and no-photo tiles', async ({ page }) =
   await expect(tiles(page).first()).toHaveAccessibleName('写真の店')
 })
 
+test('tiles use the fixed A2 look: 2px gap, no radius, edge to edge', async ({ page }) => {
+  await page.goto('/')
+  await register(page, '見た目確認', [LANDSCAPE])
+  const style = await grid(page).evaluate((el) => {
+    const g = getComputedStyle(el)
+    const tile = el.querySelector('.tile')!
+    const r = el.getBoundingClientRect()
+    return { gap: g.columnGap, rowGap: g.rowGap, radius: getComputedStyle(tile).borderRadius, left: r.left, right: r.right }
+  })
+  expect(style.gap).toBe('2px')
+  expect(style.rowGap).toBe('2px')
+  expect(style.radius).toBe('0px')
+  expect(style.left).toBe(0)
+  expect(style.right).toBe(390)
+  // no A1/A2 switch any more; the dev bar only has the sample data buttons
+  await expect(page.getByRole('button', { name: 'A1', exact: true })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'A2', exact: true })).toHaveCount(0)
+  await expect(page.getByTestId('dev-sample-bar').getByRole('button')).toHaveText(['見本用に増やす', '見本データを消す'])
+})
+
 test('column toggle defaults to 3 and persists 2 after reload', async ({ page }) => {
   await page.goto('/')
   await register(page, 'A店')
   await expect(grid(page)).toHaveAttribute('data-cols', '3')
   expect(await renderedColumns(page)).toBe(3)
 
+  // the button shows the result of tapping
+  await expect(page.getByRole('button', { name: '2列表示に切り替え' })).toHaveText('2列にする')
   await page.getByRole('button', { name: '2列表示に切り替え' }).click()
+  await expect(page.getByRole('button', { name: '3列表示に切り替え' })).toHaveText('3列にする')
   await expect(grid(page)).toHaveAttribute('data-cols', '2')
   expect(await renderedColumns(page)).toBe(2)
   // the setting is written asynchronously; wait until it is stored before reloading
@@ -97,14 +120,6 @@ test('sample data: grow to 24+, stars are drawn, then remove back to the origina
   expect(await stars.count()).toBeGreaterThan(0)
   // each Stars has 5 star icons
   await expect(stars.first().locator('svg.star')).toHaveCount(5)
-
-  // A1 / A2 switch the class only
-  const screen = page.locator('.home-screen')
-  await expect(screen).toHaveClass(/tiles-a1/)
-  await page.getByRole('button', { name: 'A2', exact: true }).click()
-  await expect(screen).toHaveClass(/tiles-a2/)
-  await page.getByRole('button', { name: 'A1', exact: true }).click()
-  await expect(screen).toHaveClass(/tiles-a1/)
 
   await page.getByRole('button', { name: '見本データを消す' }).click()
   await expect(tiles(page)).toHaveCount(2)

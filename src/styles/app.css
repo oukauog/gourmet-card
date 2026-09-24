@@ -91,48 +91,10 @@
   font-size: 22px;
 }
 
-/* ---------- home (temporary) ---------- */
+/* ---------- home ---------- */
 .empty {
   margin-top: 30vh;
   text-align: center;
-  color: var(--c-sub);
-}
-.shop-rows {
-  list-style: none;
-  margin: 0;
-  padding: 0 0 96px;
-}
-.shop-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--c-line);
-}
-.shop-row-thumb {
-  flex: none;
-  width: 64px;
-  height: 64px;
-  border-radius: 8px;
-  object-fit: cover;
-}
-.shop-row-thumb-empty {
-  background: #d8d6d2;
-}
-.shop-row-body {
-  flex: 1;
-  min-width: 0;
-}
-.shop-row-name {
-  font-weight: 700;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.shop-row-meta {
-  display: flex;
-  gap: 12px;
-  font-size: 13px;
   color: var(--c-sub);
 }
 .fab {

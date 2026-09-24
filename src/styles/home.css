@@ -1,7 +1,5 @@
-/* Home: tile list (construction 3).
-   Variants for the look comparison differ ONLY here, by the class on .home-screen:
-     .tiles-a1  card-like: 8px gap, 12px radius, 16px side margin (body padding)
-     .tiles-a2  Instagram-like: 2px gap, no radius, edge to edge
+/* Home: tile list (construction 3; look fixed to "A2" in construction 3a:
+   2px gap, no radius, edge to edge).
    Column count: .cols-2 / .cols-3 on .home-screen and --cols on the grid. */
 
 .home-topbar {
@@ -26,8 +24,10 @@
 .tile-grid {
   display: grid;
   grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr));
+  gap: 2px;
   list-style: none;
-  margin: 4px 0 0;
+  /* cancel body's 16px side padding (index.css) only for the grid: tiles reach the screen edges */
+  margin: 4px -16px 0;
   padding: 0 0 calc(96px + env(safe-area-inset-bottom));
 }
 .tile-cell,
@@ -150,59 +150,4 @@
 }
 .tile-nophoto[data-tone='5'] {
   background: linear-gradient(135deg, #f8e0e6, #f0c9d3);
-}
-
-/* ---------- A1: card-like ---------- */
-.tiles-a1 .tile-grid {
-  gap: 8px;
-}
-.tiles-a1 .tile,
-.tiles-a1 .tile-skeleton {
-  border-radius: 12px;
-}
-
-/* ---------- A2: edge to edge ---------- */
-.tiles-a2 .tile-grid {
-  gap: 2px;
-  /* cancel body's 16px side padding (index.css) only for the grid; other screens unchanged */
-  margin-inline: -16px;
-}
-.tiles-a2 .tile,
-.tiles-a2 .tile-skeleton {
-  border-radius: 0;
-}
-
-/* ---------- DEV sample bar (construction 3 only) ---------- */
-.dev-bar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-  margin: 0 0 10px;
-  padding: 6px 8px;
-  border: 1px dashed #c9c4bc;
-  border-radius: 10px;
-  font-size: 13px;
-}
-.dev-bar-label {
-  color: var(--c-sub);
-}
-.dev-chip {
-  min-height: 36px;
-  padding: 0 10px;
-  border: 1px solid var(--c-line);
-  border-radius: 999px;
-  background: #fff;
-  color: var(--c-text);
-  font: inherit;
-  font-size: 13px;
-  cursor: pointer;
-}
-.dev-chip[aria-pressed='true'] {
-  border-color: var(--c-accent);
-  background: var(--c-accent);
-  color: #fff;
-}
-.dev-chip:disabled {
-  opacity: 0.5;
 }

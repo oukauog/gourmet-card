@@ -47,7 +47,7 @@ describe('fitLongSide', () => {
   })
 
   it('uses the decided output sizes', () => {
-    expect(SMALL_IMAGE).toEqual({ longSide: 400, quality: 0.8 })
+    expect(SMALL_IMAGE).toEqual({ longSide: 600, quality: 0.8 })
     expect(LARGE_IMAGE).toEqual({ longSide: 1800, quality: 0.85 })
   })
 })
