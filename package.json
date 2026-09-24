@@ -11,7 +11,8 @@
     "e2e": "playwright test",
     "typecheck": "tsc -b --noEmit",
     "lint": "oxlint",
-    "fixtures": "node scripts/make-fixtures.mjs"
+    "fixtures": "node scripts/make-fixtures.mjs",
+    "shots": "playwright test --config e2e/playwright.shots.config.ts"
   },
   "dependencies": {
     "dexie": "^4.4.6",
