@@ -92,14 +92,14 @@ test('register a shop with 2 photos, keep it after reload, then delete', async (
   await expect(save).toBeEnabled()
   await save.click()
 
-  // back on home, newest on top, with the photo count
+  // back on home: the shop's tile with its cover photo (photo count is checked in the DB below)
   await expect(page.getByRole('status')).toHaveText('保存しました')
-  const row = page.getByRole('listitem').filter({ hasText: 'すし富山' })
-  await expect(row).toBeVisible()
-  await expect(row).toContainText('写真 2枚')
+  const tile = page.getByRole('button', { name: 'すし富山' })
+  await expect(tile).toBeVisible()
+  await expect(tile.locator('img')).toHaveCount(1)
 
   await page.reload()
-  await expect(page.getByRole('listitem').filter({ hasText: 'すし富山' })).toContainText('写真 2枚')
+  await expect(page.getByRole('button', { name: 'すし富山' })).toBeVisible()
 
   const [shop] = await readDb(page)
   expect(shop.name).toBe('すし富山')
@@ -121,7 +121,9 @@ test('register a shop with 2 photos, keep it after reload, then delete', async (
   expect(r > 150 && g < 100 && b < 100).toBe(true)
 
   page.on('dialog', (d) => void d.accept())
-  await page.getByRole('listitem').filter({ hasText: 'すし富山' }).getByRole('button', { name: '削除' }).click()
+  // delete via the (temporary) shop page
+  await page.getByRole('button', { name: 'すし富山' }).click()
+  await page.getByRole('button', { name: 'この店を削除' }).click()
   await expect(page.getByText('＋から最初のお店を登録')).toBeVisible()
   expect(await readDb(page)).toEqual([])
 })
@@ -150,9 +152,10 @@ test('refuses the 4th photo and keeps the EXIF orientation', async ({ page }) =>
 
   await page.getByPlaceholder('店名（必須）').fill('向きテスト')
   await page.getByRole('button', { name: '保存' }).click()
-  await expect(page.getByRole('listitem').filter({ hasText: '向きテスト' })).toContainText('写真 3枚')
+  await expect(page.getByRole('button', { name: '向きテスト' })).toBeVisible()
 
   const [shop] = await readDb(page)
+  expect(shop.photos).toHaveLength(3)
   // order after removal: landscape, exif, png
   const exif = shop.photos[1]
   // stored 2000x1500 with Orientation=6 -> displayed portrait 1500x2000 -> 1350x1800

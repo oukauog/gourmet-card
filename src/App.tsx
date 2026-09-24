@@ -1,18 +1,17 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Toast } from './components/Toast'
 import { db } from './db/db'
+import { navigate, replaceRoute, useHashRoute } from './router/useHashRoute'
 import { HomeScreen } from './screens/HomeScreen'
 import { RegisterScreen } from './screens/RegisterScreen'
+import { ShopScreen } from './screens/ShopScreen'
 import './styles/app.css'
-
-// Screen switching lives only here (no router yet). Replace this with a router later
-// (GitHub Pages will likely need hash-based routing; decided in construction 3+).
-type Route = { screen: 'home' } | { screen: 'register' }
 
 type DbState = 'opening' | 'ready' | 'error'
 
 function App() {
-  const [route, setRoute] = useState<Route>({ screen: 'home' })
+  // Screens follow the URL hash (#/, #/register, #/shop/<id>); see src/router/.
+  const route = useHashRoute()
   const [dbState, setDbState] = useState<DbState>('opening')
   const [toast, setToast] = useState<string>()
 
@@ -41,13 +40,31 @@ function App() {
 
   return (
     <>
-      {route.screen === 'home' && <HomeScreen onAdd={() => setRoute({ screen: 'register' })} />}
+      {route.screen === 'home' && (
+        <HomeScreen
+          onAdd={() => navigate({ screen: 'register' })}
+          onOpenShop={(id) => navigate({ screen: 'shop', id })}
+        />
+      )}
       {route.screen === 'register' && (
         <RegisterScreen
-          onCancel={() => setRoute({ screen: 'home' })}
+          // Not history.back(): after reloading #/register, back would leave the app.
+          onCancel={() => navigate({ screen: 'home' })}
           onSaved={() => {
-            setRoute({ screen: 'home' })
+            // Replace so that "back" does not return to the filled-in form.
+            replaceRoute({ screen: 'home' })
             setToast('保存しました')
+          }}
+        />
+      )}
+      {route.screen === 'shop' && (
+        <ShopScreen
+          key={route.id}
+          shopId={route.id}
+          onBack={() => navigate({ screen: 'home' })}
+          onDeleted={() => {
+            replaceRoute({ screen: 'home' })
+            setToast('削除しました')
           }}
         />
       )}

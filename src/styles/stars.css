@@ -1,0 +1,32 @@
+/* Stars (spec 4.4). Final colors are decided in construction 10: change the variables. */
+:root {
+  --star-color: #f5a623;
+  --star-empty-color: #d9d5cf;
+}
+
+.stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  line-height: 1;
+}
+.stars-icons {
+  display: inline-flex;
+  gap: 1px;
+}
+.star {
+  display: block;
+  width: var(--star-size, 14px);
+  height: var(--star-size, 14px);
+}
+.star-empty {
+  fill: var(--star-empty-color);
+}
+.star-fill {
+  fill: var(--star-color);
+}
+.stars-text {
+  font-size: calc(var(--star-size, 14px) * 1.05);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}

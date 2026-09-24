@@ -1,0 +1,31 @@
+/* TEMPORARY shop page (construction 3). */
+.shop-cover {
+  display: block;
+  width: calc(100% + 32px);
+  max-height: 75vh;
+  margin-inline: -16px;
+  object-fit: cover;
+}
+.shop-name {
+  margin: 16px 0 8px;
+  font-size: 22px;
+}
+.shop-rating {
+  min-height: 24px;
+  color: var(--c-sub);
+}
+.shop-meta {
+  margin: 8px 0 0;
+  color: var(--c-sub);
+  font-size: 14px;
+}
+.shop-delete {
+  margin-top: 40px;
+}
+.shop-missing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-top: 25vh;
+}
