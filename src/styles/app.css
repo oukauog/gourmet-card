@@ -273,3 +273,9 @@
   text-align: center;
   line-height: 1.8;
 }
+.error-detail {
+  margin: 4px 0 0;
+  color: var(--c-sub);
+  font-size: 12px;
+  word-break: break-all;
+}

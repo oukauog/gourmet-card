@@ -14,6 +14,8 @@ export function RegisterScreen({ onCancel, onSaved }: Props) {
   const [name, setName] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string>()
+  // Diagnostic (temporary): phones have no console, so show the exception on screen.
+  const [errorDetail, setErrorDetail] = useState<string>()
 
   const canSave = name.trim() !== '' && !photos.isProcessing && !saving
 
@@ -21,12 +23,14 @@ export function RegisterScreen({ onCancel, onSaved }: Props) {
     if (!canSave) return
     setSaving(true)
     setError(undefined)
+    setErrorDetail(undefined)
     try {
       const shop = await createShopWithPhotos({ name }, photos.readyPhotos)
       onSaved(shop.id)
     } catch (e) {
       console.error(e)
       setError('保存できませんでした。もう一度お試しください')
+      setErrorDetail(e instanceof Error ? `${e.name}: ${e.message}` : String(e))
       setSaving(false)
     }
   }
@@ -73,9 +77,10 @@ export function RegisterScreen({ onCancel, onSaved }: Props) {
         </label>
 
         {error && (
-          <p className="notice" role="alert">
-            {error}
-          </p>
+          <div role="alert">
+            <p className="notice">{error}</p>
+            {errorDetail && <p className="error-detail">{errorDetail}</p>}
+          </div>
         )}
 
         <div className="save-bar">
