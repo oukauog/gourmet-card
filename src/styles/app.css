@@ -1,0 +1,275 @@
+/* Minimal styles for construction 2. The real look comes from construction 3 on. */
+
+:root {
+  --c-text: #222;
+  --c-sub: #6b6b6b;
+  --c-line: #e6e3de;
+  --c-bg-soft: #f4f2ee;
+  --c-accent: #d9480f;
+  --c-accent-press: #b93b0a;
+  --c-danger: #c92a2a;
+  --tap: 44px;
+  --save-bar-h: calc(12px + 52px + 12px + env(safe-area-inset-bottom));
+  color: var(--c-text);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ---------- buttons ---------- */
+.btn {
+  min-height: var(--tap);
+  min-width: var(--tap);
+  padding: 0 16px;
+  border: 0;
+  border-radius: 12px;
+  font: inherit;
+  font-size: 16px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.btn-block {
+  display: block;
+  width: 100%;
+}
+.btn-primary {
+  min-height: 52px;
+  background: var(--c-accent);
+  color: #fff;
+  font-weight: 700;
+}
+.btn-primary:not(:disabled):active {
+  background: var(--c-accent-press);
+}
+.btn-secondary {
+  background: var(--c-bg-soft);
+  color: var(--c-text);
+  font-weight: 600;
+}
+.btn-text {
+  background: none;
+  color: var(--c-accent);
+  padding: 0 4px;
+}
+.btn-danger-text {
+  background: none;
+  color: var(--c-danger);
+  padding: 0 8px;
+}
+
+/* ---------- layout ---------- */
+.screen {
+  min-height: 100dvh;
+}
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 52px;
+}
+.topbar-title {
+  flex: 1;
+  margin: 0;
+  font-size: 18px;
+  text-align: center;
+}
+.topbar-spacer {
+  width: 80px;
+}
+.home-title {
+  text-align: left;
+  font-size: 22px;
+}
+
+/* ---------- home (temporary) ---------- */
+.empty {
+  margin-top: 30vh;
+  text-align: center;
+  color: var(--c-sub);
+}
+.shop-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 96px;
+}
+.shop-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--c-line);
+}
+.shop-row-thumb {
+  flex: none;
+  width: 64px;
+  height: 64px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+.shop-row-thumb-empty {
+  background: #d8d6d2;
+}
+.shop-row-body {
+  flex: 1;
+  min-width: 0;
+}
+.shop-row-name {
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.shop-row-meta {
+  display: flex;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--c-sub);
+}
+.fab {
+  position: fixed;
+  right: 20px;
+  bottom: calc(20px + env(safe-area-inset-bottom));
+  width: 60px;
+  height: 60px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--c-accent);
+  color: #fff;
+  font-size: 30px;
+  line-height: 1;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 0.25);
+  cursor: pointer;
+}
+
+/* ---------- register ---------- */
+.register-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-bottom: calc(var(--save-bar-h) + 16px);
+}
+.photo-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.photo-slots {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.photo-slot {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 10px;
+  background: var(--c-bg-soft);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.photo-slot-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.photo-slot-text {
+  padding: 4px 8px;
+  font-size: 13px;
+  color: var(--c-sub);
+  text-align: center;
+}
+.photo-slot-error {
+  color: var(--c-danger);
+}
+.photo-cover-label {
+  position: absolute;
+  left: 6px;
+  bottom: 6px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: rgb(0 0 0 / 0.6);
+  color: #fff;
+  font-size: 12px;
+}
+.photo-remove {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: var(--tap);
+  height: var(--tap);
+  border: 0;
+  background: none;
+  color: #fff;
+  font-size: 20px;
+  text-shadow: 0 0 4px rgb(0 0 0 / 0.8);
+  cursor: pointer;
+}
+.photo-slot[data-state='processing'] .photo-remove,
+.photo-slot[data-state='error'] .photo-remove {
+  color: var(--c-sub);
+  text-shadow: none;
+}
+.field {
+  display: block;
+}
+.text-input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 12px;
+  border: 1px solid var(--c-line);
+  border-radius: 10px;
+  font: inherit;
+  font-size: 16px; /* 16px+ prevents iOS auto zoom */
+}
+.text-input:focus {
+  outline: 2px solid var(--c-accent);
+  border-color: transparent;
+}
+.notice {
+  margin: 0;
+  color: var(--c-danger);
+  font-size: 14px;
+}
+.save-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+  background: rgb(255 255 255 / 0.96);
+  border-top: 1px solid var(--c-line);
+}
+
+/* ---------- misc ---------- */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(96px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: rgb(34 34 34 / 0.9);
+  color: #fff;
+  font-size: 14px;
+  white-space: nowrap;
+}
+.fatal {
+  margin-top: 30vh;
+  text-align: center;
+  line-height: 1.8;
+}
