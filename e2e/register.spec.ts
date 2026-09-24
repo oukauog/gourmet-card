@@ -173,3 +173,13 @@ test('cancel returns home without saving', async ({ page }) => {
   await expect(page.getByText('＋から最初のお店を登録')).toBeVisible()
   expect(await readDb(page)).toEqual([])
 })
+
+test('shows a message instead of a blank screen when IndexedDB cannot be opened', async ({ page }) => {
+  await page.addInitScript(() => {
+    IDBFactory.prototype.open = function () {
+      throw new DOMException('blocked for test', 'SecurityError')
+    }
+  })
+  await page.goto('/')
+  await expect(page.getByRole('alert')).toContainText('この環境ではデータを保存できません')
+})
