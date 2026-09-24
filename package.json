@@ -10,7 +10,8 @@
     "test": "vitest run",
     "e2e": "playwright test",
     "typecheck": "tsc -b --noEmit",
-    "lint": "oxlint"
+    "lint": "oxlint",
+    "fixtures": "node scripts/make-fixtures.mjs"
   },
   "dependencies": {
     "dexie": "^4.4.6",
