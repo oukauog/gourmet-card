@@ -2,7 +2,7 @@
 // Order: photos, name, stars, tags, place, Google Maps, memo, delete. Empty items are not shown
 // at all (only "未評価" is shown for a missing rating). Edit / send / "行った！" come with
 // the constructions that build them (5 / 8).
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { PhotoCarousel } from '../components/PhotoCarousel'
 import { Stars } from '../components/Stars'
 import { getPhotosForShop } from '../db/photos'
@@ -10,7 +10,6 @@ import { deleteShop, getShop } from '../db/shops'
 import { listTags } from '../db/tags'
 import type { Shop, Tag } from '../db/types'
 import { formatPlace, isOpenableUrl } from '../lib/shopView'
-import { DEFAULT_SHOP_LOOK, type ShopLook } from './shopLookTypes'
 import '../styles/shop.css'
 
 interface Props {
@@ -29,15 +28,6 @@ interface ShopView {
 }
 
 type Loaded = { state: 'loading' } | { state: 'missing' } | ({ state: 'ok' } & ShopView)
-
-// DEV only: look comparison (2 x 2). Loaded lazily and only in dev, so neither the chips,
-// their storage nor their CSS are part of the production build.
-const DevShopLookChips = import.meta.env.DEV
-  ? lazy(() => import('../dev/DevShopLookChips').then((m) => ({ default: m.DevShopLookChips })))
-  : null
-const loadDevLook = import.meta.env.DEV
-  ? () => import('../dev/shopLook').then((m) => m.loadShopLook())
-  : () => Promise.resolve(DEFAULT_SHOP_LOOK)
 
 async function loadShopView(shopId: string): Promise<ShopView | undefined> {
   const shop = await getShop(shopId)
@@ -58,15 +48,13 @@ async function loadShopView(shopId: string): Promise<ShopView | undefined> {
 
 export function ShopScreen({ shopId, onBack, onDeleted }: Props) {
   const [data, setData] = useState<Loaded>({ state: 'loading' })
-  const [look, setLook] = useState<ShopLook>(DEFAULT_SHOP_LOOK)
 
   useEffect(() => {
     let active = true
     window.scrollTo(0, 0)
     ;(async () => {
-      const [view, savedLook] = await Promise.all([loadShopView(shopId), loadDevLook()])
+      const view = await loadShopView(shopId)
       if (!active) return
-      setLook(savedLook)
       setData(view ? { state: 'ok', ...view } : { state: 'missing' })
     })()
     return () => {
@@ -80,21 +68,12 @@ export function ShopScreen({ shopId, onBack, onDeleted }: Props) {
     onDeleted()
   }
 
-  const rootClass = `screen shop-screen shop-ratio-${look.ratio} shop-head-${look.head}`
-
   // nothing while loading (no flicker)
-  if (data.state === 'loading') return <div className={rootClass} />
+  if (data.state === 'loading') return <div className="screen shop-screen" />
 
   return (
-    <div className={rootClass}>
-      {/* "bar" shows the top bar, "overlay" the floating button; the other one is hidden by CSS */}
-      <header className="topbar shop-topbar">
-        <button type="button" className="btn btn-text" onClick={onBack}>
-          ← 戻る
-        </button>
-        <span className="topbar-title" />
-        <span className="topbar-spacer" />
-      </header>
+    <div className="screen shop-screen">
+      {/* photo from the very top of the screen; round back button floats top-left (4.3.1) */}
       <button type="button" className="shop-float-back" aria-label="戻る" onClick={onBack}>
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M15 5l-7 7 7 7" />
@@ -111,12 +90,6 @@ export function ShopScreen({ shopId, onBack, onDeleted }: Props) {
       )}
 
       {data.state === 'ok' && <ShopBody view={data} />}
-
-      {data.state === 'ok' && DevShopLookChips && (
-        <Suspense fallback={null}>
-          <DevShopLookChips look={look} onChange={setLook} />
-        </Suspense>
-      )}
 
       {data.state === 'ok' && (
         <button type="button" className="btn btn-danger-text shop-delete" onClick={() => void remove(data.shop)}>

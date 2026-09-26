@@ -1,4 +1,4 @@
-/** Number of pale background tones for tiles without a photo (defined in app.css as data-tone). */
+/** Number of pale background tones for shops without a photo (colors: src/styles/tones.css, by data-tone). */
 export const TILE_TONE_COUNT = 6
 
 /** Tone index 0..5 decided by the shop name (sum of UTF-16 code units), stable across reloads. */

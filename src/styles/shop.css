@@ -1,34 +1,20 @@
-/* Shop page (construction 4). Look classes on .shop-screen (compared on a real phone,
-   fixed in construction 4a; the losing side is removed then):
-   - photo ratio: .shop-ratio-1x1 / .shop-ratio-4x5
-   - top:         .shop-head-bar (top bar "← 戻る") / .shop-head-overlay (photo from the very
-                  top, floating round back button) */
+/* Shop page (construction 4; look fixed in construction 4a: photo 4:5, photo from the very top
+   with a floating round back button, no top bar). */
 
 .shop-screen {
+  --photo-ratio: 4 / 5;
   padding-bottom: calc(40px + env(safe-area-inset-bottom));
 }
 
-/* ---------- look: ratio ---------- */
-.shop-ratio-1x1 {
-  --photo-ratio: 1;
-}
-.shop-ratio-4x5 {
-  --photo-ratio: 4 / 5;
-}
-
-/* ---------- look: top ---------- */
-.shop-float-back {
-  display: none;
-}
-.shop-head-overlay .shop-topbar {
-  display: none;
-}
-.shop-head-overlay .shop-photos {
-  /* cancel body's top padding (index.css) so the photo starts at the very top of the screen */
-  margin-top: calc(-1 * env(safe-area-inset-top));
+/* ---------- photos: screen edge to edge and from the very top ---------- */
+.shop-photos {
+  /* cancel body's padding (index.css): 16px on the sides, the safe area on top */
+  margin: calc(-1 * env(safe-area-inset-top)) -16px 0;
   --photo-band-h: calc(100px + env(safe-area-inset-top));
 }
-.shop-head-overlay .shop-float-back {
+
+/* ---------- floating back button (stays top-left while scrolling) ---------- */
+.shop-float-back {
   position: fixed;
   top: calc(env(safe-area-inset-top) + 10px);
   left: 12px;
@@ -60,11 +46,6 @@
   stroke-linecap: round;
   stroke-linejoin: round;
   filter: drop-shadow(0 1px 1px rgb(0 0 0 / 0.3));
-}
-
-/* ---------- photos: screen edge to edge (cancel body's 16px side padding) ---------- */
-.shop-photos {
-  margin-inline: -16px;
 }
 
 /* ---------- name / rating ---------- */

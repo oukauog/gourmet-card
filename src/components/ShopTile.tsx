@@ -2,6 +2,7 @@ import type { Shop } from '../db/types'
 import { BlobImage } from './BlobImage'
 import { Stars } from './Stars'
 import { tileToneIndex } from './tileTone'
+import '../styles/tones.css'
 
 interface Props {
   shop: Shop

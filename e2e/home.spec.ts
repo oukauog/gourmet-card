@@ -141,7 +141,7 @@ test('tile -> shop page (survives reload) -> back', async ({ page }) => {
   await expect(page).toHaveURL((u) => u.hash === shopHash)
   await expect(page.getByRole('heading', { name: '鮨 みなと' })).toBeVisible()
 
-  await page.getByRole('button', { name: '← 戻る' }).click()
+  await page.getByRole('button', { name: '戻る', exact: true }).click()
   await expect(page).toHaveURL(/#\/$/)
   await expect(page.getByRole('button', { name: '鮨 みなと' })).toBeVisible()
 

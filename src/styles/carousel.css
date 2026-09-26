@@ -54,26 +54,8 @@
   background: #fff;
 }
 
-/* no photo: low band in the same pale tones as the no-photo tile (home.css .tile-nophoto) */
+/* no photo: low band in the same pale tones as the no-photo tile (colors only in tones.css) */
 .photo-band {
   height: var(--photo-band-h, 100px);
-  background: #e9e6e1;
-}
-.photo-band[data-tone='0'] {
-  background: linear-gradient(135deg, #fdebdc, #f8d9c4);
-}
-.photo-band[data-tone='1'] {
-  background: linear-gradient(135deg, #fbf1d3, #f5e3b0);
-}
-.photo-band[data-tone='2'] {
-  background: linear-gradient(135deg, #e3f1dd, #cfe6c6);
-}
-.photo-band[data-tone='3'] {
-  background: linear-gradient(135deg, #dcecf6, #c7ddee);
-}
-.photo-band[data-tone='4'] {
-  background: linear-gradient(135deg, #ece3f5, #dccdee);
-}
-.photo-band[data-tone='5'] {
-  background: linear-gradient(135deg, #f8e0e6, #f0c9d3);
+  background: var(--tone-bg, #e9e6e1);
 }

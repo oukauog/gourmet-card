@@ -221,74 +221,84 @@ test('delete returns to the list without the shop; unknown id shows a message', 
   await expect(page.getByText('この店は見つかりません')).toBeVisible()
 })
 
-test('look samples 2x2: photo ratio and top bar / floating back button', async ({ page }) => {
+test('fixed look 4:5 x overlay: photo from the top, floating back button, no bar', async ({ page }) => {
   await register(page, '見た目の店', [LANDSCAPE, PORTRAIT_PNG])
   await register(page, '帯の店')
   await page.getByRole('button', { name: '見た目の店', exact: true }).click()
   await expect(page.getByRole('heading', { level: 1, name: '見た目の店' })).toBeVisible()
-  const chips = page.getByTestId('dev-shop-look')
-  const slideBox = async () => (await slides(page).first().boundingBox())!
 
-  // default: 1:1 x bar
-  await expect(chips.getByRole('button', { name: '1:1' })).toHaveAttribute('aria-pressed', 'true')
-  await expect(chips.getByRole('button', { name: 'バー' })).toHaveAttribute('aria-pressed', 'true')
-  let box = await slideBox()
-  expect(box.width).toBe(390)
+  // photo: full width, from the very top, 4:5
+  const box = (await slides(page).first().boundingBox())!
   expect(box.x).toBe(0)
-  expect(box.height).toBeCloseTo(390, 0)
-  await expect(page.getByRole('button', { name: '← 戻る' })).toBeVisible()
-  await expect(page.getByRole('button', { name: '戻る', exact: true })).toBeHidden()
-  expect(box.y).toBeGreaterThanOrEqual(52) // below the bar
-
-  // 4:5 -> height = width x 1.25
-  await chips.getByRole('button', { name: '4:5' }).click()
-  await expect(page.locator('.shop-screen')).toHaveClass(/shop-ratio-4x5/)
-  box = await slideBox()
+  expect(box.y).toBe(0)
+  expect(box.width).toBe(390)
   expect(box.height).toBeCloseTo(390 * 1.25, 0)
 
-  // overlay: no bar, photo from the very top, floating back button stays on scroll
-  await chips.getByRole('button', { name: '重ね' }).click()
-  await expect(page.locator('.shop-screen')).toHaveClass(/shop-head-overlay/)
-  await expect(page.getByRole('button', { name: '← 戻る' })).toBeHidden()
+  // no top bar, no look chips; the floating back button is top-left and stays on scroll
+  await expect(page.getByRole('button', { name: '← 戻る' })).toHaveCount(0)
+  await expect(page.locator('.topbar')).toHaveCount(0)
+  await expect(page.getByTestId('dev-shop-look')).toHaveCount(0)
   const back = page.getByRole('button', { name: '戻る', exact: true })
   await expect(back).toBeVisible()
-  box = await slideBox()
-  expect(box.y).toBe(0)
-  expect(box.height).toBeCloseTo(390 * 1.25, 0)
   const before = (await back.boundingBox())!
   expect(before.x).toBeLessThan(40)
   expect(before.y).toBeLessThan(40)
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0)
   expect((await back.boundingBox())!.y).toBe(before.y)
-
-  // 1:1 x overlay
-  await chips.getByRole('button', { name: '1:1' }).click()
-  box = await slideBox()
-  expect(box.height).toBeCloseTo(390, 0)
-
-  // the choice is kept for other shops (and a no-photo shop gets the button over its band)
   await back.click()
   await expect(page).toHaveURL(/#\/$/)
+
+  // no-photo shop: the band starts at the top and the button sits on it
   await page.getByRole('button', { name: '帯の店', exact: true }).click()
   await expect(page.getByRole('heading', { level: 1, name: '帯の店' })).toBeVisible()
-  await expect(page.locator('.shop-screen')).toHaveClass(/shop-ratio-1x1/)
-  await expect(page.locator('.shop-screen')).toHaveClass(/shop-head-overlay/)
   const band = (await page.getByTestId('photo-band').boundingBox())!
   expect(band.y).toBe(0)
   const b2 = (await back.boundingBox())!
+  expect(b2.y).toBeGreaterThanOrEqual(band.y)
   expect(b2.y + b2.height).toBeLessThanOrEqual(band.y + band.height)
-  await page.reload()
-  await expect(page.locator('.shop-screen')).toHaveClass(/shop-head-overlay/)
   await back.click()
   await expect(page).toHaveURL(/#\/$/)
 
-  // 4:5 x bar
-  await page.getByRole('button', { name: '見た目の店', exact: true }).click()
-  await chips.getByRole('button', { name: '4:5' }).click()
-  await chips.getByRole('button', { name: 'バー' }).click()
-  await expect(page.getByRole('button', { name: '← 戻る' })).toBeVisible()
-  box = await slideBox()
-  expect(box.height).toBeCloseTo(390 * 1.25, 0)
-  expect(box.y).toBeGreaterThanOrEqual(52)
+  // unknown shop: the button does not overlap the message or "一覧へ戻る"
+  await page.goto('/#/shop/does-not-exist')
+  await expect(page.getByText('この店は見つかりません')).toBeVisible()
+  const b3 = (await back.boundingBox())!
+  for (const other of [page.getByText('この店は見つかりません'), page.getByRole('button', { name: '一覧へ戻る' })]) {
+    const o = (await other.boundingBox())!
+    const overlap = b3.x < o.x + o.width && o.x < b3.x + b3.width && b3.y < o.y + o.height && o.y < b3.y + b3.height
+    expect(overlap).toBe(false)
+  }
+  await back.click()
+  await expect(page).toHaveURL(/#\/$/)
+})
+
+test('pale tones are the same on the no-photo tile and the no-photo band (6 tones)', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.getByTestId('tile-grid')).toBeVisible()
+  const expected = [
+    'linear-gradient(135deg, rgb(253, 235, 220), rgb(248, 217, 196))',
+    'linear-gradient(135deg, rgb(251, 241, 211), rgb(245, 227, 176))',
+    'linear-gradient(135deg, rgb(227, 241, 221), rgb(207, 230, 198))',
+    'linear-gradient(135deg, rgb(220, 236, 246), rgb(199, 221, 238))',
+    'linear-gradient(135deg, rgb(236, 227, 245), rgb(220, 205, 238))',
+    'linear-gradient(135deg, rgb(248, 224, 230), rgb(240, 201, 211))',
+  ]
+  // both stylesheets are loaded on the list page (App imports every screen)
+  const got = await page.evaluate(() => {
+    const read = (html: string) => {
+      const d = document.createElement('div')
+      d.innerHTML = html
+      document.body.append(d)
+      const bg = getComputedStyle(d.firstElementChild!).backgroundImage
+      d.remove()
+      return bg
+    }
+    return Array.from({ length: 6 }, (_, i) => ({
+      tile: read(`<button class="tile tile-nophoto" data-tone="${i}"></button>`),
+      band: read(`<div class="photo-band" data-tone="${i}"></div>`),
+    }))
+  })
+  expect(got.map((g) => g.tile)).toEqual(expected)
+  expect(got.map((g) => g.band)).toEqual(expected)
 })

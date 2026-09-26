@@ -1,0 +1,22 @@
+/* Pale tones for shops without a photo: the ONLY place where the 6 colors are defined.
+   data-tone = tileToneIndex(name) (0..5, src/components/tileTone.ts). Each tone sets --tone-bg;
+   the no-photo tile (.tile-nophoto, home.css) and the no-photo band (.photo-band, carousel.css)
+   use it as their background. */
+[data-tone='0'] {
+  --tone-bg: linear-gradient(135deg, #fdebdc, #f8d9c4);
+}
+[data-tone='1'] {
+  --tone-bg: linear-gradient(135deg, #fbf1d3, #f5e3b0);
+}
+[data-tone='2'] {
+  --tone-bg: linear-gradient(135deg, #e3f1dd, #cfe6c6);
+}
+[data-tone='3'] {
+  --tone-bg: linear-gradient(135deg, #dcecf6, #c7ddee);
+}
+[data-tone='4'] {
+  --tone-bg: linear-gradient(135deg, #ece3f5, #dccdee);
+}
+[data-tone='5'] {
+  --tone-bg: linear-gradient(135deg, #f8e0e6, #f0c9d3);
+}

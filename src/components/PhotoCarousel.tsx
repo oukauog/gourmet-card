@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { slideIndexFromScroll } from '../lib/shopView'
 import { BlobImage } from './BlobImage'
 import { tileToneIndex } from './tileTone'
+import '../styles/tones.css'
 import '../styles/carousel.css'
 
 interface Props {
