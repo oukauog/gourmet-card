@@ -147,9 +147,11 @@ export function ShopForm({ title, initialValues, initialPhotos = [], confirmDisc
 
         <UseTagPicker value={v.uses} onChange={(t) => set('uses', t)} />
 
-        <label className="form-field">
-          <span className="form-label">県</span>
-          <select className="text-input form-select" value={v.prefecture} onChange={(e) => set('prefecture', e.target.value)}>
+        <div className="form-field">
+          <label className="form-label" htmlFor="form-prefecture">
+            県
+          </label>
+          <select id="form-prefecture" className="text-input form-select" value={v.prefecture} onChange={(e) => set('prefecture', e.target.value)}>
             <option value="">未選択</option>
             {prefectures.map((p) => (
               <option key={p} value={p}>
@@ -157,13 +159,16 @@ export function ShopForm({ title, initialValues, initialPhotos = [], confirmDisc
               </option>
             ))}
           </select>
-        </label>
+        </div>
 
         <TagInput kind="area" label="エリア" placeholder="例: 総曲輪" value={v.areas} onChange={(t) => set('areas', t)} />
 
-        <label className="form-field">
-          <span className="form-label">GoogleマップURL</span>
+        <div className="form-field">
+          <label className="form-label" htmlFor="form-map-url">
+            GoogleマップURL
+          </label>
           <input
+            id="form-map-url"
             className="text-input"
             type="url"
             inputMode="url"
@@ -175,12 +180,14 @@ export function ShopForm({ title, initialValues, initialPhotos = [], confirmDisc
             onChange={(e) => set('mapUrl', e.target.value)}
           />
           {urlWarning && <span className="form-hint form-warn">http で始まる URL でないと、店ページにボタンが出ません</span>}
-        </label>
+        </div>
 
-        <label className="form-field">
-          <span className="form-label">メモ</span>
-          <textarea className="text-input form-memo" rows={4} value={v.memo} onChange={(e) => set('memo', e.target.value)} />
-        </label>
+        <div className="form-field">
+          <label className="form-label" htmlFor="form-memo">
+            メモ
+          </label>
+          <textarea id="form-memo" className="text-input form-memo" rows={4} value={v.memo} onChange={(e) => set('memo', e.target.value)} />
+        </div>
 
         {error && (
           <div role="alert">
