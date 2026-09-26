@@ -1,12 +1,12 @@
 // Shop page (spec 4.3 / 4.3.1, construction 4).
-// Order: photos, name, stars, tags, place, Google Maps, memo, delete. Empty items are not shown
-// at all (only "未評価" is shown for a missing rating). Edit / send / "行った！" come with
-// the constructions that build them (5 / 8).
+// Order: photos, name, stars, ("行った！" for wishlist shops), tags, place, Google Maps, memo,
+// edit, delete. Empty items are not shown at all (only "未評価" is shown for a missing rating).
+// "この店を送る" comes with construction 8.
 import { useEffect, useState } from 'react'
 import { PhotoCarousel } from '../components/PhotoCarousel'
 import { Stars } from '../components/Stars'
 import { getPhotosForShop } from '../db/photos'
-import { deleteShop, getShop } from '../db/shops'
+import { deleteShop, getShop, updateShop } from '../db/shops'
 import { listTags } from '../db/tags'
 import type { Shop, Tag } from '../db/types'
 import { formatPlace, isOpenableUrl } from '../lib/shopView'
@@ -16,6 +16,8 @@ interface Props {
   shopId: string
   onBack: () => void
   onDeleted: () => void
+  /** Open the edit screen (navigate). */
+  onEdit: () => void
 }
 
 interface ShopView {
@@ -46,7 +48,7 @@ async function loadShopView(shopId: string): Promise<ShopView | undefined> {
   }
 }
 
-export function ShopScreen({ shopId, onBack, onDeleted }: Props) {
+export function ShopScreen({ shopId, onBack, onDeleted, onEdit }: Props) {
   const [data, setData] = useState<Loaded>({ state: 'loading' })
 
   useEffect(() => {
@@ -66,6 +68,12 @@ export function ShopScreen({ shopId, onBack, onDeleted }: Props) {
     if (!window.confirm(`「${shop.name}」を削除しますか？`)) return
     await deleteShop(shop.id)
     onDeleted()
+  }
+
+  // "行った！": becomes 手札 right away, then the edit screen asks for photos / rating
+  const went = async (shop: Shop) => {
+    await updateShop(shop.id, { status: 'visited' })
+    onEdit()
   }
 
   // nothing while loading (no flicker)
@@ -89,7 +97,13 @@ export function ShopScreen({ shopId, onBack, onDeleted }: Props) {
         </div>
       )}
 
-      {data.state === 'ok' && <ShopBody view={data} />}
+      {data.state === 'ok' && <ShopBody view={data} onWent={() => void went(data.shop)} />}
+
+      {data.state === 'ok' && (
+        <button type="button" className="btn btn-secondary shop-edit" onClick={onEdit}>
+          編集
+        </button>
+      )}
 
       {data.state === 'ok' && (
         <button type="button" className="btn btn-danger-text shop-delete" onClick={() => void remove(data.shop)}>
@@ -100,7 +114,7 @@ export function ShopScreen({ shopId, onBack, onDeleted }: Props) {
   )
 }
 
-function ShopBody({ view }: { view: ShopView }) {
+function ShopBody({ view, onWent }: { view: ShopView; onWent: () => void }) {
   const { shop, photos, genres, uses, areas } = view
   const place = formatPlace(shop.prefecture, shop.city)
   const areaText = areas.map((t) => t.name).join('・')
@@ -117,6 +131,12 @@ function ShopBody({ view }: { view: ShopView }) {
       <div className="shop-rating">
         {shop.rating !== undefined ? <Stars rating={shop.rating} size={22} /> : <span className="shop-unrated">未評価</span>}
       </div>
+
+      {shop.status === 'wishlist' && (
+        <button type="button" className="btn btn-primary btn-block shop-went" onClick={onWent}>
+          行った！
+        </button>
+      )}
 
       {(genres.length > 0 || uses.length > 0) && (
         <ul className="shop-tags" aria-label="タグ">

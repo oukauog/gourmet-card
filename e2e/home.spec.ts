@@ -20,6 +20,9 @@ async function register(page: Page, name: string, files: string[] = []) {
   }
   await page.getByPlaceholder('店名（必須）').fill(name)
   await page.getByRole('button', { name: '保存' }).click()
+  // construction 5: saving opens the shop page; go back to the list with its back button
+  await expect(page.getByRole('heading', { level: 1, name: name, exact: true })).toBeVisible()
+  await page.getByRole('button', { name: '戻る', exact: true }).click()
   await expect(page.getByRole('button', { name })).toBeVisible()
 }
 
@@ -171,9 +174,15 @@ test('#/register survives reload; cancel goes home', async ({ page }) => {
 
 test('after save, back does not reopen the register form', async ({ page }) => {
   await page.goto('/#/')
-  await register(page, '戻る確認')
+  // construction 5: save opens the shop page (register entry replaced by it), so back goes to the list
+  await page.getByRole('button', { name: 'お店を登録' }).click()
+  await page.getByPlaceholder('店名（必須）').fill('戻る確認')
+  await page.getByRole('button', { name: '保存' }).click()
+  await expect(page).toHaveURL(/#\/shop\/[0-9a-f-]{36}$/)
+  await expect(page.getByRole('heading', { level: 1, name: '戻る確認' })).toBeVisible()
   await page.goBack()
-  // the register entry was replaced by home, so back leaves #/register behind
+  await expect(page).toHaveURL(/#\/$/)
+  // the register entry was replaced, so back leaves #/register behind
   await expect(page.getByRole('heading', { name: 'お店を登録' })).toHaveCount(0)
 })
 

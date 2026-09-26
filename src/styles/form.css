@@ -1,0 +1,275 @@
+/* Register / edit form (construction 5). Base layout: .register-form, .text-input, .save-bar (app.css). */
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.form-label {
+  color: var(--c-sub);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+.form-hint {
+  font-size: 12px;
+  line-height: 1.5;
+}
+.form-warn {
+  color: #b35c00;
+}
+.form-select {
+  appearance: none;
+  background: #fff
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%236b6b6b' stroke-width='1.6'/%3E%3C/svg%3E")
+    no-repeat right 14px center / 12px 8px;
+  color: var(--c-text);
+}
+.form-memo {
+  min-height: calc(4 * 1.6em + 20px);
+  line-height: 1.6;
+  resize: vertical;
+}
+
+/* ---------- photos: move buttons (bottom right; the cover label stays bottom left) ---------- */
+.photo-move {
+  position: absolute;
+  bottom: 4px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgb(0 0 0 / 0.5);
+  color: #fff;
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.photo-move-left {
+  right: 40px;
+}
+.photo-move-right {
+  right: 4px;
+}
+.photo-slot[data-state='processing'] .photo-move,
+.photo-slot[data-state='error'] .photo-move {
+  background: rgb(0 0 0 / 0.25);
+}
+
+/* ---------- 手札 / 行きたい ---------- */
+.segmented {
+  display: flex;
+  padding: 3px;
+  border-radius: 12px;
+  background: var(--c-bg-soft);
+}
+.segmented-option {
+  flex: 1;
+  min-height: 40px;
+  border: 0;
+  border-radius: 9px;
+  background: none;
+  color: var(--c-sub);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.segmented-option[aria-checked='true'] {
+  background: #fff;
+  color: var(--c-text);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.15);
+}
+
+/* ---------- rating ---------- */
+.rating-input {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.rating-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+}
+.rating-value {
+  min-width: 2.2em;
+  font-size: 34px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+/* the big number is shown on the left; hide the small one inside Stars */
+.rating-input .stars-text {
+  display: none;
+}
+.rating-none {
+  color: var(--c-sub);
+  font-size: 20px;
+  font-weight: 700;
+}
+.rating-clear {
+  margin-left: auto;
+  min-height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--c-line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--c-sub);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.rating-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.rating-step {
+  flex: none;
+  min-width: 56px;
+  min-height: var(--tap);
+  border: 0;
+  border-radius: 12px;
+  background: var(--c-bg-soft);
+  color: var(--c-text);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.rating-step:active {
+  background: var(--c-line);
+}
+/* the buttons sit at the sides, so the slider is 70px+ away from the screen edges
+   (the iPhone back swipe starts at the edge) */
+.rating-slider {
+  flex: 1;
+  min-width: 0;
+  height: var(--tap);
+  margin: 0;
+  accent-color: var(--star-color, #f5a623);
+}
+.rating-input[data-rated='false'] .rating-slider {
+  opacity: 0.35;
+}
+
+/* ---------- tags (genre / area) ---------- */
+.tag-box {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-height: 48px;
+  box-sizing: border-box;
+  padding: 6px 8px;
+  border: 1px solid var(--c-line);
+  border-radius: 10px;
+}
+.tag-box:focus-within {
+  outline: 2px solid var(--c-accent);
+  border-color: transparent;
+}
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 2px 0 10px;
+  border-radius: 999px;
+  background: var(--c-bg-soft);
+  font-size: 14px;
+  line-height: 32px;
+}
+.tag-chip-remove {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--c-sub);
+  font-size: 16px;
+  cursor: pointer;
+}
+.tag-text {
+  flex: 1;
+  min-width: 7em;
+  min-height: 34px;
+  padding: 0 4px;
+  border: 0;
+  outline: none;
+  font: inherit;
+  font-size: 16px; /* 16px+ prevents iOS auto zoom */
+  background: none;
+}
+.tag-add {
+  min-height: 34px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--c-accent);
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.tag-suggest {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.tag-candidate {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px dashed #c9c4bc;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--c-text);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+/* ---------- use tags ---------- */
+.use-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.use-chip,
+.use-add {
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid var(--c-line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--c-text);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.use-chip[aria-pressed='true'] {
+  border-color: var(--c-accent);
+  background: var(--c-accent);
+  color: #fff;
+  font-weight: 700;
+}
+.use-add {
+  border-style: dashed;
+  color: var(--c-sub);
+}
+.use-new {
+  display: flex;
+  gap: 8px;
+}

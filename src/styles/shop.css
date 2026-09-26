@@ -135,10 +135,22 @@
   overflow-wrap: anywhere;
 }
 
+/* ---------- "行った！" (wishlist shops, under the stars) ---------- */
+.shop-went {
+  margin-top: 14px;
+}
+
+/* ---------- edit (above delete) ---------- */
+.shop-edit {
+  display: block;
+  min-width: 160px;
+  margin: 36px auto 0;
+}
+
 /* ---------- delete (bottom, quiet) ---------- */
 .shop-delete {
   display: block;
-  margin: 40px auto 0;
+  margin: 20px auto 0;
   font-size: 14px;
 }
 

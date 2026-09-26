@@ -92,8 +92,12 @@ test('register a shop with 2 photos, keep it after reload, then delete', async (
   await expect(save).toBeEnabled()
   await save.click()
 
-  // back on home: the shop's tile with its cover photo (photo count is checked in the DB below)
+  // construction 5: saving opens the shop page; back to the list, where the shop's tile has its cover
+  // photo (photo count is checked in the DB below)
   await expect(page.getByRole('status')).toHaveText('保存しました')
+  // construction 5: saving opens the shop page; go back to the list with its back button
+  await expect(page.getByRole('heading', { level: 1, name: 'すし富山', exact: true })).toBeVisible()
+  await page.getByRole('button', { name: '戻る', exact: true }).click()
   const tile = page.getByRole('button', { name: 'すし富山' })
   await expect(tile).toBeVisible()
   await expect(tile.locator('img')).toHaveCount(1)
@@ -152,7 +156,8 @@ test('refuses the 4th photo and keeps the EXIF orientation', async ({ page }) =>
 
   await page.getByPlaceholder('店名（必須）').fill('向きテスト')
   await page.getByRole('button', { name: '保存' }).click()
-  await expect(page.getByRole('button', { name: '向きテスト' })).toBeVisible()
+  // construction 5: saving opens the shop page
+  await expect(page.getByRole('heading', { level: 1, name: '向きテスト' })).toBeVisible()
 
   const [shop] = await readDb(page)
   expect(shop.photos).toHaveLength(3)
