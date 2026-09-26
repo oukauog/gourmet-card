@@ -89,9 +89,12 @@ export async function addSampleShops(target = SAMPLE_TARGET): Promise<number> {
       ? (await getPhotosForShop(src.id)).map(({ small, large, width, height }) => ({ small, large, width, height }))
       : []
     const rating = i % 7 === 6 ? undefined : randomRating()
+    // every 5th copy is a wishlist shop (for the 行きたい tab, construction 6)
+    const status = i % 5 === 4 ? 'wishlist' : 'visited'
     const f = sampleFields(i)
     const input: ShopInput = {
       name,
+      status,
       rating,
       prefecture: f.prefecture,
       city: f.city,

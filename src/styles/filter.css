@@ -1,0 +1,261 @@
+/* List tabs, filter chips, count / sort row and bottom sheets (construction 6).
+   Nothing here is sticky: it scrolls away with the list (spec 4.1.1). */
+
+/* ---------- tabs ---------- */
+.list-tabs {
+  display: flex;
+  padding: 3px;
+  border-radius: 12px;
+  background: var(--c-bg-soft);
+}
+.list-tab {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 40px;
+  border: 0;
+  border-radius: 9px;
+  background: none;
+  color: var(--c-sub);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.list-tab[aria-selected='true'] {
+  background: #fff;
+  color: var(--c-text);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.15);
+}
+.list-tab-count {
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--c-sub);
+}
+
+/* ---------- chip row: one line, sideways scroll, inside body's 16px side padding
+   (so it never starts at the screen edge where the iPhone back swipe begins) ---------- */
+.filter-chips {
+  display: flex;
+  gap: 6px;
+  margin: 10px 0 0;
+  padding: 2px 0;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.filter-chips::-webkit-scrollbar {
+  display: none;
+}
+.filter-chip {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 14em;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--c-line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--c-text);
+  font: inherit;
+  font-size: 14px;
+  white-space: nowrap;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.filter-chip-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.filter-chip-caret {
+  font-size: 10px;
+  color: var(--c-sub);
+}
+.filter-chip[data-active='true'] {
+  border-color: var(--c-text);
+  background: var(--c-text);
+  color: #fff;
+  font-weight: 700;
+}
+.filter-chip[data-active='true'] .filter-chip-caret {
+  color: rgb(255 255 255 / 0.8);
+}
+
+/* ---------- count and sort row ---------- */
+.list-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  font-size: 14px;
+}
+.list-count {
+  font-variant-numeric: tabular-nums;
+  color: var(--c-sub);
+}
+.list-clear {
+  min-height: 32px;
+  padding: 0 6px;
+  border: 0;
+  background: none;
+  color: var(--c-accent);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.list-sort {
+  margin-left: auto;
+  min-height: 36px;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--c-text);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.list-nomatch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-top: 20vh;
+  color: var(--c-sub);
+}
+.list-nomatch p {
+  margin: 0;
+}
+
+/* ---------- bottom sheet ---------- */
+.sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  background: rgb(0 0 0 / 0.45);
+  animation: sheet-fade 0.15s ease-out;
+}
+.sheet {
+  display: flex;
+  flex-direction: column;
+  max-height: 70dvh;
+  border-radius: 16px 16px 0 0;
+  background: #fff;
+  outline: none;
+  animation: sheet-up 0.2s ease-out;
+}
+.sheet-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 16px 6px;
+}
+.sheet-title {
+  flex: 1;
+  margin: 0;
+  font-size: 17px;
+}
+.sheet-clear {
+  min-height: 36px;
+  padding: 0 8px;
+  border: 0;
+  background: none;
+  color: var(--c-accent);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+.sheet-clear:disabled {
+  color: var(--c-sub);
+  opacity: 0.5;
+  cursor: default;
+}
+.sheet-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 6px 16px 16px;
+}
+.sheet-foot {
+  padding: 10px 16px calc(12px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--c-line);
+}
+/* sheets without a footer still keep off the home indicator */
+.sheet-body:last-child {
+  padding-bottom: calc(20px + env(safe-area-inset-bottom));
+}
+.sheet-section + .sheet-section {
+  margin-top: 16px;
+}
+.sheet-section-title {
+  margin: 0 0 8px;
+  color: var(--c-sub);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+.sheet-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.sheet-empty {
+  margin: 8px 0;
+  color: var(--c-sub);
+}
+.option-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--c-line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--c-text);
+  font: inherit;
+  font-size: 15px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.option-chip[aria-pressed='true'],
+.option-chip[aria-checked='true'] {
+  border-color: var(--c-text);
+  background: var(--c-text);
+  color: #fff;
+  font-weight: 700;
+}
+.option-count {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+}
+
+@keyframes sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+}
+@keyframes sheet-fade {
+  from {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sheet,
+  .sheet-backdrop {
+    animation: none;
+  }
+}

@@ -34,6 +34,14 @@ describe('sample data (dev only)', () => {
     expect((await listShops()).map((s) => s.name).sort()).toEqual(['元A', '元B'])
   })
 
+  it('about every 5th copy is a wishlist shop (construction 6)', async () => {
+    await createShopWithPhotos({ name: '元' }, [])
+    await addSampleShops(11) // i = 0..9
+    const samples = (await listShops()).filter((s) => s.name.endsWith(SAMPLE_SUFFIX))
+    expect(samples.filter((s) => s.status === 'wishlist')).toHaveLength(2) // i = 4, 9
+    expect(samples.filter((s) => s.status === 'visited')).toHaveLength(8)
+  })
+
   it('works with no shops at all', async () => {
     expect(await addSampleShops(3)).toBe(3)
     expect((await listShops()).every((s) => s.name.endsWith(SAMPLE_SUFFIX))).toBe(true)

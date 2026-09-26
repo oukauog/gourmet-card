@@ -1,10 +1,27 @@
-import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useState, type CSSProperties } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import { FilterChips, type FilterPanelKind } from '../components/filter/FilterChips'
+import { FilterPanel, type PanelKind } from '../components/filter/FilterPanel'
+import { ListTabs } from '../components/filter/ListTabs'
+import { pageScrollY } from '../components/filter/scrollLock'
+import { SORT_LABELS } from '../components/filter/sortLabels'
 import { ShopTile } from '../components/ShopTile'
 import { getPhoto } from '../db/photos'
 import { getSetting, setSetting } from '../db/settings'
 import { listShops } from '../db/shops'
-import type { Shop } from '../db/types'
+import { listTags } from '../db/tags'
+import type { Shop, ShopStatus, SortOrder } from '../db/types'
+import {
+  emptyFilter,
+  filterChipLabels,
+  filterOptions,
+  isFilterActive,
+  matchesFilter,
+  resultCountText,
+  setUnratedOnly,
+  type ShopFilter,
+} from '../lib/shopFilter'
 import '../styles/home.css'
+import '../styles/filter.css'
 
 interface Props {
   onAdd: () => void
@@ -17,8 +34,15 @@ interface Row {
   cover?: Blob
 }
 
+interface ListData {
+  /** Every shop of both tabs, in the sort order. */
+  rows: Row[]
+  tagNames: Map<string, string>
+}
+
 type Columns = 2 | 3
 const DEFAULT_COLUMNS: Columns = 3
+const DEFAULT_SORT: SortOrder = 'newest'
 const SKELETON_COUNT = 9
 
 // DEV only: sample data buttons. Loaded lazily and only in dev, so neither its JS nor its CSS
@@ -27,38 +51,56 @@ const DevSampleBar = import.meta.env.DEV
   ? lazy(() => import('../dev/DevSampleBar').then((m) => ({ default: m.DevSampleBar })))
   : null
 
-// Last list and scroll position, so coming back from a shop page shows the list at once
-// (no blank / skeleton flash) at the same place, while a fresh load runs in the background.
-let lastRows: Row[] | undefined
+// Kept while the app runs, so coming back from a shop page shows the list at once (no blank /
+// skeleton flash) at the same place, with the same tab and filter, while a fresh load runs in
+// the background. The tab and the filter are NOT saved: a reload starts at "手札, no filter"
+// (spec 4.1.1). The sort order is saved in settings.
+let lastData: ListData | undefined
 let lastColumns: Columns | undefined
+let lastSort: SortOrder | undefined
 let lastScrollY = 0
+let lastTab: ShopStatus = 'visited'
+let lastFilter: ShopFilter = emptyFilter()
 
-async function loadRows(): Promise<Row[]> {
-  const shops = await listShops()
-  return Promise.all(
+/** All shops (both tabs) once, with their small covers, and the tag names. */
+async function loadList(sort: SortOrder): Promise<ListData> {
+  const [shops, tags] = await Promise.all([listShops({ sort }), listTags()])
+  const rows = await Promise.all(
     shops.map(async (shop) => ({
       shop,
       cover: shop.photoIds[0] ? (await getPhoto(shop.photoIds[0]))?.small : undefined,
     })),
   )
+  return { rows, tagNames: new Map(tags.map((t) => [t.id, t.name])) }
 }
 
 export function HomeScreen({ onAdd, onOpenShop }: Props) {
-  const [rows, setRows] = useState<Row[] | undefined>(lastRows)
+  const [data, setData] = useState<ListData | undefined>(lastData)
   const [columns, setColumns] = useState<Columns | undefined>(lastColumns)
+  const [sort, setSort] = useState<SortOrder | undefined>(lastSort)
+  const [tab, setTab] = useState<ShopStatus>(lastTab)
+  const [filter, setFilter] = useState<ShopFilter>(lastFilter)
+  const [panel, setPanel] = useState<PanelKind>()
+  // only the newest load may set the data (sort changes can overlap)
+  const loadSeq = useRef(0)
 
-  const reload = useCallback(async () => {
-    const next = await loadRows()
-    lastRows = next
-    setRows(next)
+  const load = useCallback(async (s: SortOrder) => {
+    const seq = ++loadSeq.current
+    const next = await loadList(s)
+    if (seq !== loadSeq.current) return
+    lastData = next
+    setData(next)
   }, [])
 
   useEffect(() => {
     let active = true
-    loadRows().then((next) => {
-      lastRows = next
-      if (active) setRows(next)
-    })
+    ;(async () => {
+      const s = lastSort ?? (await getSetting('sortOrder')) ?? DEFAULT_SORT
+      lastSort = s
+      if (!active) return
+      setSort(s)
+      await load(s)
+    })()
     getSetting('columns').then((c) => {
       lastColumns = c ?? DEFAULT_COLUMNS
       if (active) setColumns(lastColumns)
@@ -66,13 +108,13 @@ export function HomeScreen({ onAdd, onOpenShop }: Props) {
     return () => {
       active = false
     }
-  }, [])
+  }, [load])
 
   // Restore the scroll position when the cached list is shown; remember it on leave.
   useLayoutEffect(() => {
-    if (lastRows) window.scrollTo(0, lastScrollY)
+    if (lastData) window.scrollTo(0, lastScrollY)
     return () => {
-      lastScrollY = window.scrollY
+      lastScrollY = pageScrollY()
     }
   }, [])
 
@@ -83,9 +125,51 @@ export function HomeScreen({ onAdd, onOpenShop }: Props) {
     void setSetting('columns', next)
   }
 
+  const changeTab = (t: ShopStatus) => {
+    if (t === tab) return
+    lastTab = t
+    setTab(t)
+    window.scrollTo(0, 0)
+  }
+  const changeFilter = (f: ShopFilter) => {
+    lastFilter = f
+    setFilter(f)
+  }
+  const changeSort = (s: SortOrder) => {
+    if (s === sort) return
+    lastSort = s
+    setSort(s)
+    void setSetting('sortOrder', s)
+    void load(s)
+  }
+
+  const tagName = useCallback((id: string) => data?.tagNames.get(id), [data])
+  const view = useMemo(() => {
+    const rows = data?.rows ?? []
+    const tabRows = rows.filter((r) => r.shop.status === tab)
+    return {
+      counts: {
+        visited: rows.filter((r) => r.shop.status === 'visited').length,
+        wishlist: rows.filter((r) => r.shop.status === 'wishlist').length,
+      },
+      tabRows,
+      shown: tabRows.filter((r) => matchesFilter(r.shop, filter)),
+      options: filterOptions(
+        tabRows.map((r) => r.shop),
+        filter,
+        tagName,
+      ),
+    }
+  }, [data, tab, filter, tagName])
+  const labels = filterChipLabels(filter, tagName)
+  const active = isFilterActive(filter)
+  const clearFilter = () => changeFilter(emptyFilter())
+
+  const ready = data !== undefined && columns !== undefined
   const cols = columns ?? DEFAULT_COLUMNS
   const nextCols: Columns = cols === 3 ? 2 : 3
   const gridStyle = { '--cols': cols } as CSSProperties
+  const tabTotal = view.tabRows.length
 
   return (
     <div className={`screen home-screen cols-${cols}`}>
@@ -104,30 +188,76 @@ export function HomeScreen({ onAdd, onOpenShop }: Props) {
         </button>
       </header>
 
-      {/* Future: tabs (手札/行きたい) and the filter bar go here (construction 6). */}
+      <ListTabs value={tab} counts={view.counts} onChange={changeTab} />
 
-      {DevSampleBar && (
-        <Suspense fallback={null}>
-          <DevSampleBar onDataChanged={() => void reload()} />
-        </Suspense>
+      <FilterChips
+        filter={filter}
+        labels={labels}
+        onOpen={(k: FilterPanelKind) => setPanel(k)}
+        onToggleUnrated={() => changeFilter(setUnratedOnly(filter, !filter.unratedOnly))}
+      />
+
+      {ready && tabTotal > 0 && (
+        <div className="list-meta">
+          <span className="list-count" data-testid="list-count">
+            {resultCountText(view.shown.length, tabTotal, active)}
+          </span>
+          {active && (
+            <button type="button" className="list-clear" onClick={clearFilter}>
+              条件を解除
+            </button>
+          )}
+          <button type="button" className="list-sort" aria-haspopup="dialog" onClick={() => setPanel('sort')}>
+            {SORT_LABELS[sort ?? DEFAULT_SORT]}
+            <span aria-hidden="true"> ▾</span>
+          </button>
+        </div>
       )}
 
-      {rows && columns && rows.length === 0 && <p className="empty">＋から最初のお店を登録</p>}
+      {ready && tabTotal === 0 && (
+        <p className="empty">{tab === 'visited' ? '＋から最初のお店を登録' : '行きたいお店はまだありません'}</p>
+      )}
+      {ready && tabTotal > 0 && view.shown.length === 0 && (
+        <div className="list-nomatch">
+          <p>条件に合うお店がありません</p>
+          <button type="button" className="btn btn-secondary" onClick={clearFilter}>
+            条件を解除
+          </button>
+        </div>
+      )}
 
-      <ul className="tile-grid" style={gridStyle} data-testid="tile-grid" data-cols={cols} aria-busy={rows === undefined || columns === undefined}>
-        {(rows === undefined || columns === undefined) &&
-          Array.from({ length: SKELETON_COUNT }, (_, i) => <li key={i} className="tile-skeleton" aria-hidden="true" />)}
-        {columns !== undefined &&
-          rows?.map(({ shop, cover }) => (
+      <ul className="tile-grid" style={gridStyle} data-testid="tile-grid" data-cols={cols} aria-busy={!ready}>
+        {!ready && Array.from({ length: SKELETON_COUNT }, (_, i) => <li key={i} className="tile-skeleton" aria-hidden="true" />)}
+        {ready &&
+          view.shown.map(({ shop, cover }) => (
             <li key={shop.id} className="tile-cell">
               <ShopTile shop={shop} cover={cover} onOpen={onOpenShop} />
             </li>
           ))}
       </ul>
 
+      {DevSampleBar && (
+        <Suspense fallback={null}>
+          <DevSampleBar onDataChanged={() => void load(sort ?? DEFAULT_SORT)} />
+        </Suspense>
+      )}
+
       <button type="button" className="fab" aria-label="お店を登録" onClick={onAdd}>
         ＋
       </button>
+
+      {panel && (
+        <FilterPanel
+          kind={panel}
+          filter={filter}
+          options={view.options}
+          shownCount={view.shown.length}
+          sort={sort ?? DEFAULT_SORT}
+          onFilterChange={changeFilter}
+          onSortChange={changeSort}
+          onClose={() => setPanel(undefined)}
+        />
+      )}
     </div>
   )
 }

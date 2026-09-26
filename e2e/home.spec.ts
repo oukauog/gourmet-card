@@ -118,7 +118,10 @@ test('sample data: grow to 24+, stars are drawn, then remove back to the origina
   await expect(page.getByRole('img', { name: /^評価 / })).toHaveCount(0) // no rating UI yet
 
   await page.getByRole('button', { name: '見本用に増やす' }).click()
-  await expect.poll(() => tiles(page).count(), { timeout: 20_000 }).toBeGreaterThanOrEqual(24)
+  // construction 6: some samples are wishlist shops (other tab), so count both tabs
+  const tabTotal = async () =>
+    (await page.locator('.list-tab-count').allTextContents()).reduce((sum, t) => sum + Number(t), 0)
+  await expect.poll(tabTotal, { timeout: 20_000 }).toBeGreaterThanOrEqual(24)
   const stars = page.getByRole('img', { name: /^評価 \d\.\d$/ })
   expect(await stars.count()).toBeGreaterThan(0)
   // each Stars has 5 star icons
