@@ -2,8 +2,13 @@
 //   #/            home
 //   #/register    register screen
 //   #/shop/<id>   shop page (id is URI-encoded)
+//   #/shop/<id>/edit  edit screen of the shop
 
-export type Route = { screen: 'home' } | { screen: 'register' } | { screen: 'shop'; id: string }
+export type Route =
+  | { screen: 'home' }
+  | { screen: 'register' }
+  | { screen: 'shop'; id: string }
+  | { screen: 'edit'; id: string }
 
 const HOME: Route = { screen: 'home' }
 
@@ -12,11 +17,11 @@ export function parseHash(hash: string): Route {
   const path = hash.startsWith('#') ? hash.slice(1) : hash
   if (path === '' || path === '/') return HOME
   if (path === '/register') return { screen: 'register' }
-  const m = /^\/shop\/([^/]+)$/.exec(path)
+  const m = /^\/shop\/([^/]+)(\/edit)?$/.exec(path)
   if (m) {
     try {
       const id = decodeURIComponent(m[1])
-      if (id !== '') return { screen: 'shop', id }
+      if (id !== '') return m[2] ? { screen: 'edit', id } : { screen: 'shop', id }
     } catch {
       // malformed escape (e.g. "%E0%A4%A") -> home
     }
@@ -33,5 +38,7 @@ export function formatHash(route: Route): string {
       return '#/register'
     case 'shop':
       return `#/shop/${encodeURIComponent(route.id)}`
+    case 'edit':
+      return `#/shop/${encodeURIComponent(route.id)}/edit`
   }
 }

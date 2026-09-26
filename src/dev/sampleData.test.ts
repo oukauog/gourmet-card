@@ -3,6 +3,7 @@ import { createShopWithPhotos } from '../db/createShopWithPhotos'
 import { getPhotosForShop } from '../db/photos'
 import { getShop, listShops } from '../db/shops'
 import { findOrCreateTag, listTags } from '../db/tags'
+import { seedUseTags } from '../db/seedUseTags'
 import { blobOf, bytesOf, resetDbAndClock } from '../db/testHelpers'
 import { addSampleShops, removeSampleShops, SAMPLE_LONG_MEMO, SAMPLE_SUFFIX, sampleFields } from './sampleData'
 
@@ -82,7 +83,8 @@ describe('sample data (dev only)', () => {
     expect((await listTags()).length).toBeGreaterThan(0)
 
     await removeSampleShops()
-    expect(await listTags()).toEqual([])
+    // construction 5: "個室あり" is an initial use tag, so it is kept (see the last test)
+    expect((await listTags()).map((t) => `${t.kind}:${t.name}`)).toEqual(['use:個室あり'])
     expect((await listShops()).map((s) => s.name)).toEqual(['元'])
   })
 
@@ -93,7 +95,22 @@ describe('sample data (dev only)', () => {
     await addSampleShops(8)
 
     await removeSampleShops()
-    expect((await listTags()).map((t) => t.id).sort()).toEqual([ramen.id, other.id].sort())
+    // (+ the initial use tag 個室あり, which is never deleted since construction 5)
+    const kept = (await listTags()).filter((t) => t.kind !== 'use')
+    expect(kept.map((t) => t.id).sort()).toEqual([ramen.id, other.id].sort())
     expect((await getShop(own.id))!.genreTagIds).toEqual([ramen.id])
+  })
+
+  it('never deletes the initial use tags (個室あり / 駐車場あり), even when no shop uses them', async () => {
+    await seedUseTags()
+    const before = (await listTags('use')).map((t) => t.id).sort()
+    expect(before).toHaveLength(2)
+    await createShopWithPhotos({ name: '元' }, [])
+    await addSampleShops()
+    await removeSampleShops()
+    expect((await listTags('use')).map((t) => t.id).sort()).toEqual(before)
+    expect((await listTags('use')).map((t) => t.name).sort()).toEqual(['個室あり', '駐車場あり'].sort())
+    expect(await listTags('genre')).toEqual([])
+    expect(await listTags('area')).toEqual([])
   })
 })

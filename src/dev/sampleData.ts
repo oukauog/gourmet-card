@@ -5,6 +5,7 @@
 import { createShopWithPhotos } from '../db/createShopWithPhotos'
 import { getPhotosForShop } from '../db/photos'
 import { deleteShop, listShops } from '../db/shops'
+import { INITIAL_USE_TAGS } from '../db/seedUseTags'
 import { deleteTag, findOrCreateTag, listTags } from '../db/tags'
 import type { PhotoInput, ShopInput, TagKind } from '../db/types'
 import { normalizeTagKey } from '../lib/tagKey'
@@ -110,6 +111,7 @@ export async function addSampleShops(target = SAMPLE_TARGET): Promise<number> {
 /**
  * Delete every shop whose name ends with "（見本）", then the sample tags that no shop uses any
  * more. deleteTag also detaches the tag from shops, so a tag still used by any shop is kept.
+ * The initial use tags (個室あり / 駐車場あり, seedUseTags) are never deleted here.
  */
 export async function removeSampleShops(): Promise<number> {
   const samples = (await listShops()).filter((s) => s.name.endsWith(SAMPLE_SUFFIX))
@@ -117,6 +119,7 @@ export async function removeSampleShops(): Promise<number> {
 
   const used = new Set((await listShops()).flatMap((s) => [...s.genreTagIds, ...s.useTagIds, ...s.areaTagIds]))
   const sampleKeys = new Set(SAMPLE_TAGS.flatMap(({ kind, names }) => names.map((n) => `${kind}:${normalizeTagKey(n)}`)))
+  for (const n of INITIAL_USE_TAGS) sampleKeys.delete(`use:${normalizeTagKey(n)}`)
   for (const tag of await listTags()) {
     if (sampleKeys.has(`${tag.kind}:${tag.normalizedKey}`) && !used.has(tag.id)) await deleteTag(tag.id)
   }

@@ -65,6 +65,8 @@ export interface SettingsMap {
   lastBackupAt: IsoDateString
   sortOrder: SortOrder
   columns: 2 | 3
+  /** When the initial use tags were created (construction 5; never re-created after that). */
+  useTagsSeededAt: IsoDateString
 }
 
 export type SettingKey = keyof SettingsMap

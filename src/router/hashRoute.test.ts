@@ -44,3 +44,33 @@ describe('formatHash', () => {
     expect(parseHash(formatHash(r))).toEqual(r)
   })
 })
+
+// construction 5: edit screen
+describe('edit route', () => {
+  it('#/shop/<id>/edit -> edit', () => {
+    expect(parseHash('#/shop/abc/edit')).toEqual({ screen: 'edit', id: 'abc' })
+    expect(parseHash('#/shop/%E5%AF%BF%E5%8F%B8/edit')).toEqual({ screen: 'edit', id: '寿司' })
+  })
+
+  it('formats the edit route', () => {
+    expect(formatHash({ screen: 'edit', id: 'abc' })).toBe('#/shop/abc/edit')
+    expect(formatHash({ screen: 'edit', id: 'a/b c' })).toBe('#/shop/a%2Fb%20c/edit')
+  })
+
+  it.each<Route>([
+    { screen: 'edit', id: '3f2a1c9e-7b4d-4e21-9a0b-5c6d7e8f9a0b' },
+    { screen: 'edit', id: 'a/b?c#d%e f&g=h' },
+    { screen: 'edit', id: 'edit' },
+    { screen: 'shop', id: 'edit' },
+  ])('round-trips %j', (r) => {
+    expect(parseHash(formatHash(r))).toEqual(r)
+  })
+
+  it.each(['#/shop//edit', '#/shop/edit', '#/shop/a/edit/', '#/shop/a/edit/x', '#/shop/a/Edit', '#/shop/a/editx', '#/shop/%E0%A4%A/edit'])(
+    'broken %j -> home or shop, never throws',
+    (h) => {
+      const r = parseHash(h)
+      expect(r.screen === 'home' || (h === '#/shop/edit' && r.screen === 'shop')).toBe(true)
+    },
+  )
+})
