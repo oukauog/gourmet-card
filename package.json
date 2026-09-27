@@ -14,7 +14,8 @@
     "fixtures": "node scripts/make-fixtures.mjs",
     "geo-data": "node scripts/build-geo-data.mjs",
     "e2e:dist": "playwright test -c playwright.dist.config.ts",
-    "deploy": "npm run build && node scripts/deploy.mjs"
+    "deploy": "npm run build && node scripts/deploy.mjs",
+    "icons": "node scripts/make-icons.mjs"
   },
   "dependencies": {
     "dexie": "^4.4.6",

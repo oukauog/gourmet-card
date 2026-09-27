@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- 案B: a card + a star. Full bleed, no corner radius. -->
+  <rect width="512" height="512" fill="#d9480f"/>
+  <g transform="rotate(-8 256 256)">
+    <rect x="146" y="118" width="220" height="276" rx="26" fill="#ffffff"/>
+    <path d="M256 170 l24.7 50 55.3 8 -40 39 9.4 55 -49.4 -26 -49.4 26 9.4 -55 -40 -39 55.3 -8z" fill="#f5a623"/>
+    <rect x="186" y="338" width="140" height="16" rx="8" fill="#e9dccf"/>
+  </g>
+</svg>
