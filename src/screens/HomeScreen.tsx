@@ -25,9 +25,12 @@ import {
 } from '../lib/shopFilter'
 import '../styles/home.css'
 import '../styles/filter.css'
+import '../styles/data.css'
 
 interface Props {
   onAdd: () => void
+  /** The menu button: "バックアップと取り込み" (construction 8). */
+  onOpenData?: () => void
   onOpenShop: (shopId: string) => void
 }
 
@@ -77,7 +80,22 @@ async function loadList(sort: SortOrder): Promise<ListData> {
   return { rows, tagNames: new Map(tags.map((t) => [t.id, t.name])) }
 }
 
-export function HomeScreen({ onAdd, onOpenShop }: Props) {
+/**
+ * Forget the list kept in memory (after an import, construction 8), so the next visit shows
+ * fresh data. With a tab: open the list there, without a filter, at the top.
+ */
+// must live next to the module variables it resets
+// oxlint-disable-next-line react/only-export-components
+export function resetListView(tab?: ShopStatus): void {
+  lastData = undefined
+  if (tab) {
+    lastTab = tab
+    lastFilter = emptyFilter()
+    lastScrollY = 0
+  }
+}
+
+export function HomeScreen({ onAdd, onOpenShop, onOpenData }: Props) {
   const [data, setData] = useState<ListData | undefined>(lastData)
   const [columns, setColumns] = useState<Columns | undefined>(lastColumns)
   const [sort, setSort] = useState<SortOrder | undefined>(lastSort)
@@ -202,17 +220,26 @@ export function HomeScreen({ onAdd, onOpenShop }: Props) {
     <div className={`screen home-screen cols-${cols}`}>
       <header className="topbar home-topbar">
         <h1 className="topbar-title home-title">グルメカード</h1>
-        <button
-          type="button"
-          className="btn cols-toggle"
-          aria-label={`${nextCols}列表示に切り替え`}
-          onClick={toggleColumns}
-          disabled={columns === undefined}
-        >
-          {/* shows the RESULT of tapping (the next column count) */}
-          <ColumnsIcon cols={nextCols} />
-          <span>{nextCols}列にする</span>
-        </button>
+        <div className="home-topbar-actions">
+          <button
+            type="button"
+            className="btn cols-toggle"
+            aria-label={`${nextCols}列表示に切り替え`}
+            onClick={toggleColumns}
+            disabled={columns === undefined}
+          >
+            {/* shows the RESULT of tapping (the next column count) */}
+            <ColumnsIcon cols={nextCols} />
+            <span>{nextCols}列にする</span>
+          </button>
+          {onOpenData && (
+            <button type="button" className="btn menu-button" aria-label="メニュー" onClick={onOpenData}>
+              <svg className="menu-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 7h16M4 12h16M4 17h16" />
+              </svg>
+            </button>
+          )}
+        </div>
       </header>
 
       <ListTabs value={tab} counts={view.counts} onChange={changeTab} />

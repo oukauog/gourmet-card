@@ -45,6 +45,24 @@ describe('formatHash', () => {
   })
 })
 
+// construction 8: backup and import screen
+describe('data route', () => {
+  it('#/data <-> data', () => {
+    expect(parseHash('#/data')).toEqual({ screen: 'data' })
+    expect(formatHash({ screen: 'data' })).toBe('#/data')
+    expect(parseHash(formatHash({ screen: 'data' }))).toEqual({ screen: 'data' })
+  })
+
+  it.each(['#/data/', '#/data/x', '#/Data', '#/datas', '#data'])('%j is not the data screen (home)', (h) => {
+    expect(parseHash(h)).toEqual({ screen: 'home' })
+  })
+
+  it('the other routes are unchanged', () => {
+    expect(parseHash('#/register')).toEqual({ screen: 'register' })
+    expect(parseHash('#/shop/data')).toEqual({ screen: 'shop', id: 'data' })
+  })
+})
+
 // construction 5: edit screen
 describe('edit route', () => {
   it('#/shop/<id>/edit -> edit', () => {

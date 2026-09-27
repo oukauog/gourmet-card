@@ -1,0 +1,158 @@
+/* Send / backup / import (construction 8): the data screen, the send and import sheets, and the
+   additions to the shop page and the list's top bar. Base: app.css, filter.css (sheet, chips). */
+
+/* ---------- data screen (#/data) ---------- */
+.data-screen {
+  padding-bottom: calc(32px + env(safe-area-inset-bottom));
+}
+.data-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+  padding: 16px;
+  border-radius: 14px;
+  background: var(--c-bg-soft);
+}
+.data-title {
+  margin: 0;
+  font-size: 17px;
+}
+.data-text {
+  margin: 0;
+  color: var(--c-sub);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.data-last {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+.data-section .btn-secondary {
+  background: #fff;
+}
+.data-trial {
+  margin-top: 40px;
+  border: 1px dashed #c9c4bc;
+  background: none;
+}
+.data-trial-title {
+  margin: 0;
+  color: var(--c-sub);
+  font-size: 13px;
+  font-weight: 600;
+}
+.data-trial-options {
+  display: flex;
+  gap: 8px;
+}
+
+/* ---------- send / import sheets ---------- */
+.send-sheet,
+.import-sheet {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-bottom: 4px;
+}
+.send-status {
+  margin: 4px 0 0;
+  font-size: 16px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.send-file-name {
+  margin: -6px 0 0;
+  color: var(--c-sub);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.send-save {
+  font-weight: 500;
+}
+.import-facts {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  margin: 0;
+  font-size: 14px;
+}
+.import-facts dt {
+  color: var(--c-sub);
+}
+.import-facts dd {
+  margin: 0;
+  font-weight: 600;
+}
+.import-counts {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 16px;
+  font-weight: 700;
+}
+.import-warn {
+  color: #b35c00;
+  font-size: 14px;
+  font-weight: 600;
+}
+.import-choice {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.import-choice-title {
+  margin: 0;
+  color: var(--c-sub);
+  font-size: 13px;
+  font-weight: 600;
+}
+.import-choice-options {
+  display: flex;
+  gap: 8px;
+}
+.import-note {
+  margin: 0;
+  color: var(--c-sub);
+  font-size: 14px;
+}
+
+/* ---------- shop page: "この店を送る" (under 編集) and "もらったお店" ---------- */
+.shop-send {
+  display: block;
+  min-width: 160px;
+  margin: 12px auto 0;
+}
+.shop-shared {
+  margin: -4px 0 8px;
+  color: var(--c-sub);
+  font-size: 13px;
+}
+
+/* ---------- list top bar: menu button (looks like the column button) ---------- */
+.home-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.menu-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  padding: 0;
+  background: var(--c-bg-soft);
+  color: var(--c-text);
+}
+.menu-icon {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}

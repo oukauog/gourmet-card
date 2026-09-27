@@ -3,8 +3,9 @@ import { Toast } from './components/Toast'
 import { db } from './db/db'
 import { seedUseTags } from './db/seedUseTags'
 import { navigate, replaceRoute, useHashRoute } from './router/useHashRoute'
+import { DataScreen } from './screens/DataScreen'
 import { EditScreen } from './screens/EditScreen'
-import { HomeScreen } from './screens/HomeScreen'
+import { HomeScreen, resetListView } from './screens/HomeScreen'
 import { RegisterScreen } from './screens/RegisterScreen'
 import { ShopScreen } from './screens/ShopScreen'
 import './styles/app.css'
@@ -71,6 +72,18 @@ function App() {
         <HomeScreen
           onAdd={() => navigate({ screen: 'register' })}
           onOpenShop={(id) => navigate({ screen: 'shop', id })}
+          onOpenData={() => navigate({ screen: 'data' })}
+        />
+      )}
+      {route.screen === 'data' && (
+        <DataScreen
+          onBack={() => navigate({ screen: 'home' })}
+          onOpenShop={(id) => navigate({ screen: 'shop', id })}
+          onOpenList={(tab) => {
+            resetListView(tab)
+            navigate({ screen: 'home' })
+          }}
+          onDataChanged={() => resetListView()}
         />
       )}
       {route.screen === 'register' && (

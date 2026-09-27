@@ -1,10 +1,13 @@
 // Shop page (spec 4.3 / 4.3.1, construction 4).
 // Order: photos, name, stars, ("行った！" for wishlist shops), tags, place, Google Maps, memo,
-// edit, delete. Empty items are not shown at all (only "未評価" is shown for a missing rating).
-// "この店を送る" comes with construction 8.
+// edit, send (construction 8), delete. Empty items are not shown at all (only "未評価" is shown
+// for a missing rating). Shops from a friend (origin "shared") say "もらったお店" under the name.
 import { useEffect, useState } from 'react'
 import { PhotoCarousel } from '../components/PhotoCarousel'
+import { currentCardFileType } from '../components/share/FileTypeTrial'
+import { SendSheet } from '../components/share/SendSheet'
 import { Stars } from '../components/Stars'
+import { exportShopCard } from '../db/exportCards'
 import { getPhotosForShop } from '../db/photos'
 import { deleteShop, getShop, updateShop } from '../db/shops'
 import { listTags } from '../db/tags'
@@ -13,6 +16,7 @@ import { useStationMaster } from '../hooks/useGeoMaster'
 import { findStation, stationLabel } from '../lib/geo'
 import { formatPlace, isOpenableUrl } from '../lib/shopView'
 import '../styles/shop.css'
+import '../styles/data.css'
 
 interface Props {
   shopId: string
@@ -52,6 +56,7 @@ async function loadShopView(shopId: string): Promise<ShopView | undefined> {
 
 export function ShopScreen({ shopId, onBack, onDeleted, onEdit }: Props) {
   const [data, setData] = useState<Loaded>({ state: 'loading' })
+  const [sending, setSending] = useState(false)
 
   useEffect(() => {
     let active = true
@@ -108,6 +113,16 @@ export function ShopScreen({ shopId, onBack, onDeleted, onEdit }: Props) {
       )}
 
       {data.state === 'ok' && (
+        <button type="button" className="btn btn-secondary shop-send" onClick={() => setSending(true)}>
+          この店を送る
+        </button>
+      )}
+
+      {sending && (
+        <SendSheet title="この店を送る" prepare={(onProgress) => exportShopCard(shopId, currentCardFileType(), onProgress)} onClose={() => setSending(false)} />
+      )}
+
+      {data.state === 'ok' && (
         <button type="button" className="btn btn-danger-text shop-delete" onClick={() => void remove(data.shop)}>
           この店を削除
         </button>
@@ -134,6 +149,7 @@ function ShopBody({ view, onWent }: { view: ShopView; onWent: () => void }) {
       </div>
 
       <h1 className="shop-name">{shop.name}</h1>
+      {shop.origin === 'shared' && <p className="shop-shared">もらったお店</p>}
       <div className="shop-rating">
         {shop.rating !== undefined ? <Stars rating={shop.rating} size={22} /> : <span className="shop-unrated">未評価</span>}
       </div>

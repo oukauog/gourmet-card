@@ -143,9 +143,9 @@ test('3 photos with every field: carousel, dots, large image, stars, tags, place
   // no link inside the memo
   await expect(page.getByRole('region', { name: 'メモ' }).getByRole('link')).toHaveCount(0)
 
-  // "編集" exists since construction 5; "送る" (construction 8) not yet; "行った！" only for wishlist shops
+  // "編集" exists since construction 5; "この店を送る" since construction 8; "行った！" only for wishlist shops
   await expect(page.getByRole('button', { name: '編集', exact: true })).toBeVisible()
-  await expect(page.getByRole('button', { name: 'この店を送る' })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'この店を送る' })).toBeVisible()
   await expect(page.getByRole('button', { name: '行った！' })).toHaveCount(0)
 
   // reload shows the same shop
