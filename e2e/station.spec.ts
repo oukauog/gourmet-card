@@ -189,7 +189,7 @@ test('unknown station id: form shows （見つからない駅）, shop page show
 
   const only = await apiShop(page, { name: '駅だけの店', stationId: 'x09' })
   await page.goto(`/#/shop/${only}`)
-  await expect(place(page)).toHaveText('黒部宇奈月温泉駅')
+  await expect(place(page)).toHaveText('最寄り駅：黒部宇奈月温泉駅')
 })
 
 test('the list does not read the station master unless a shop of the tab has a station', async ({ page }) => {
@@ -222,6 +222,7 @@ test('淡路町 (in the 御茶ノ水 group) is a station of its own: 東京都 /
   await save(page, '淡路町の店')
   await expect(place(page)).toContainText('東京都 千代田区')
   await expect(place(page).locator('.shop-station')).toHaveText('淡路町駅')
+  await expect(place(page).locator('.shop-station-row')).toHaveText('最寄り駅：淡路町駅')
   expect(await dbShop(page, '淡路町の店')).toMatchObject({ stationId: await stationId(page, '淡路町', '東京都') })
 })
 

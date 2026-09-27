@@ -164,7 +164,13 @@ function ShopBody({ view, onWent }: { view: ShopView; onWent: () => void }) {
           <h2 className="shop-section-title">場所</h2>
           <p className="shop-place">
             {place && <span>{place}</span>}
-            {stationText && <span className="shop-station">{stationText}</span>}
+            {stationText && (
+              // "最寄り駅：淡路町駅": a station name alone reads like a shop inside the station (construction 7b)
+              <span className="shop-station-row">
+                <span className="shop-station-label">最寄り駅：</span>
+                <span className="shop-station">{stationText}</span>
+              </span>
+            )}
             {areaText && <span className="shop-area">{areaText}</span>}
           </p>
         </section>
