@@ -7,6 +7,9 @@ const VALIDATORS: { [K in SettingKey]: (v: unknown) => v is SettingsMap[K] } = {
   sortOrder: (v): v is SortOrder => SORT_ORDERS.includes(v as SortOrder),
   columns: (v): v is 2 | 3 => v === 2 || v === 3,
   useTagsSeededAt: (v): v is string => typeof v === 'string' && !Number.isNaN(Date.parse(v)),
+  firstShopAt: (v): v is string => typeof v === 'string' && !Number.isNaN(Date.parse(v)),
+  backupReminderDismissedAt: (v): v is string => typeof v === 'string' && !Number.isNaN(Date.parse(v)),
+  installGuideDismissedAt: (v): v is string => typeof v === 'string' && !Number.isNaN(Date.parse(v)),
 }
 
 /** Stored value of the setting, or undefined if never set. */

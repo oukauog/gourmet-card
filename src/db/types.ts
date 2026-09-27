@@ -67,6 +67,12 @@ export interface SettingsMap {
   columns: 2 | 3
   /** When the initial use tags were created (construction 5; never re-created after that). */
   useTagsSeededAt: IsoDateString
+  /** When this device first saw a shop in the list (base of the backup reminder; construction 9). */
+  firstShopAt: IsoDateString
+  /** When × was tapped on the backup reminder (not shown for 7 days; construction 9). */
+  backupReminderDismissedAt: IsoDateString
+  /** When × was tapped on the "add to home screen" guide (never shown again; construction 9). */
+  installGuideDismissedAt: IsoDateString
 }
 
 export type SettingKey = keyof SettingsMap

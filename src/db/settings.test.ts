@@ -25,6 +25,15 @@ describe('settings', () => {
     expect(await getSetting('columns')).toBe(2)
   })
 
+  it('construction 9: firstShopAt / backupReminderDismissedAt / installGuideDismissedAt are dates', async () => {
+    for (const key of ['firstShopAt', 'backupReminderDismissedAt', 'installGuideDismissedAt'] as const) {
+      await setSetting(key, '2026-09-28T01:02:03.000Z')
+      expect(await getSetting(key)).toBe('2026-09-28T01:02:03.000Z')
+      await expect(setSetting(key, 'not a date')).rejects.toBeInstanceOf(ValidationError)
+      await expect(setSetting(key, 5 as unknown as string)).rejects.toBeInstanceOf(ValidationError)
+    }
+  })
+
   it('rejects wrong values and unknown keys at runtime', async () => {
     await expect(setSetting('columns', 4 as 2)).rejects.toBeInstanceOf(ValidationError)
     await expect(setSetting('sortOrder', 'old' as 'name')).rejects.toBeInstanceOf(ValidationError)
