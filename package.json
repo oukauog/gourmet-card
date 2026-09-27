@@ -11,7 +11,8 @@
     "e2e": "playwright test",
     "typecheck": "tsc -b --noEmit",
     "lint": "oxlint",
-    "fixtures": "node scripts/make-fixtures.mjs"
+    "fixtures": "node scripts/make-fixtures.mjs",
+    "geo-data": "node scripts/build-geo-data.mjs"
   },
   "dependencies": {
     "dexie": "^4.4.6",
@@ -27,6 +28,7 @@
     "@vitejs/plugin-react": "^6.1.1",
     "fake-indexeddb": "^6.2.5",
     "oxlint": "^1.81.0",
+    "read-excel-file": "^9.3.10",
     "typescript": "~6.0.2",
     "vite": "^8.3.0",
     "vite-plugin-pwa": "^1.3.0",
