@@ -2,7 +2,7 @@
 // exactly (spec 6). Each test builds data through the public API, writes a file, empties the
 // database (= another / a new phone) and imports it.
 import { beforeEach, describe, expect, it } from 'vitest'
-import { CARD_FILE_TYPES } from '../lib/cardFileType'
+import { CARD_FILE_TYPE } from '../lib/cardFileType'
 import { CardFileError, ENTRY } from '../lib/cardFormat'
 import { setClock } from '../lib/time'
 import { buildZip } from '../lib/zipStore'
@@ -16,7 +16,7 @@ import { findOrCreateTag, listTags } from './tags'
 import { bytesOf, resetDbAndClock } from './testHelpers'
 import type { PhotoInput, Shop } from './types'
 
-const GCARD = CARD_FILE_TYPES.gcard
+const ZIP = CARD_FILE_TYPE
 
 /** A photo whose bytes are unique (so a broken byte can be found and the images told apart). */
 const photo = (n: number, w = 1800, h = 1350): PhotoInput => ({
@@ -94,11 +94,11 @@ describe('backup round trip (the lifeline)', () => {
     expect(before.tags).toHaveLength(7)
 
     const progress: string[] = []
-    const file = await exportBackup(GCARD, (p) => progress.push(`${p.photosDone}/${p.photosTotal}`))
+    const file = await exportBackup(ZIP, (p) => progress.push(`${p.photosDone}/${p.photosTotal}`))
     expect([file.kind, file.shopCount, file.photoCount]).toEqual(['backup', 5, 6])
     expect(progress[0]).toBe('0/6')
     expect(progress.at(-1)).toBe('6/6')
-    expect(file.fileName).toMatch(/^グルメカード_バックアップ_\d{8}-\d{4}\.gcard$/)
+    expect(file.fileName).toMatch(/^グルメカード_バックアップ_\d{8}-\d{4}\.zip$/)
 
     await resetDbAndClock() // an empty phone
     expect(await listShops()).toEqual([])
@@ -118,7 +118,7 @@ describe('backup round trip (the lifeline)', () => {
   })
 
   it('a backup of an empty phone is a valid file', async () => {
-    const file = await exportBackup(GCARD)
+    const file = await exportBackup(ZIP)
     const preview = await previewCard(file.blob)
     expect([preview.shops.length, preview.tags.length]).toEqual([0, 0])
     expect(await importCard(preview, { overwrite: false })).toMatchObject({ added: 0, failed: 0 })
@@ -127,11 +127,11 @@ describe('backup round trip (the lifeline)', () => {
   it('a second round trip (import -> export -> import) is still identical', async () => {
     await seedVaried()
     const before = await snapshot()
-    const f1 = await exportBackup(GCARD)
+    const f1 = await exportBackup(ZIP)
     await resetDbAndClock()
     await importCard(await previewCard(f1.blob), { overwrite: false })
-    const f2 = await exportBackup(CARD_FILE_TYPES.zip)
-    expect(f2.fileName.endsWith('.zip')).toBe(true)
+    const f2 = await exportBackup(ZIP)
+    expect([f2.fileName.endsWith('.zip'), f2.mime]).toEqual([true, 'application/zip'])
     await resetDbAndClock()
     await importCard(await previewCard(f2.blob), { overwrite: false })
     const after = await snapshot()
@@ -146,8 +146,8 @@ describe('share one shop', () => {
     const { full } = await seedVaried()
     const sent = (await getShop(full.id))!
     const sentPhotos = (await snapshot()).photos.filter((p) => p.shopId === full.id)
-    const file = await exportShopCard(full.id, GCARD)
-    expect([file.kind, file.shopCount, file.photoCount, file.fileName]).toEqual(['share', 1, 3, 'グルメカード_白えび亭.gcard'])
+    const file = await exportShopCard(full.id, ZIP)
+    expect([file.kind, file.shopCount, file.photoCount, file.fileName]).toEqual(['share', 1, 3, 'グルメカード_白えび亭.zip'])
 
     await resetDbAndClock()
     setClock(() => '2026-10-01T03:04:05.000Z')
@@ -178,7 +178,7 @@ describe('a shop that is already here (same id)', () => {
 
   it('default: kept as it is; overwrite: replaced, and its old photos are gone', async () => {
     const { full } = await seedVaried()
-    const file = await exportShopCard(full.id, GCARD)
+    const file = await exportShopCard(full.id, ZIP)
     // the receiver changed it meanwhile: new name, rating, one extra photo removed / added
     await db.shops.update(full.id, { name: '自分で直した名前', rating: 45 })
     const oldPhotoIds = (await getShop(full.id))!.photoIds
@@ -208,7 +208,7 @@ describe('a shop that is already here (same id)', () => {
 
   it('backup restore: shops already here are kept by default, the others are added', async () => {
     const { plain } = await seedVaried()
-    const file = await exportBackup(GCARD)
+    const file = await exportBackup(ZIP)
     await db.shops.delete(plain.id)
     await db.shops.update((await listShops())[0].id, { name: '変えた' })
     const r = await importCard(await previewCard(file.blob), { overwrite: false })
@@ -224,7 +224,7 @@ describe('tags and ids', () => {
     const t1 = await findOrCreateTag('genre', 'ﾗｰﾒﾝ') // half-width katakana
     const t2 = await findOrCreateTag('use', 'wi-fi')
     const s = await createShopWithPhotos({ name: '送る店', genreTagIds: [t1.id], useTagIds: [t2.id] }, [])
-    const file = await exportShopCard(s.id, GCARD)
+    const file = await exportShopCard(s.id, ZIP)
     await resetDbAndClock()
     const here1 = await findOrCreateTag('genre', 'ラーメン') // full-width: same key
     const here2 = await findOrCreateTag('use', 'Wi-Fi')
@@ -239,7 +239,7 @@ describe('tags and ids', () => {
     const tag = await findOrCreateTag('genre', 'カフェ')
     const s = await createShopWithPhotos({ name: '送る店', genreTagIds: [tag.id] }, [photo(1)])
     const photoId = s.photoIds[0]
-    const file = await exportShopCard(s.id, GCARD)
+    const file = await exportShopCard(s.id, ZIP)
     await resetDbAndClock()
     // on this phone, the same ids belong to something else
     await db.tags.add({ id: tag.id, kind: 'area', name: '別のタグ', normalizedKey: '別のタグ', createdAt: '2026-01-01T00:00:00.000Z' })
@@ -333,7 +333,7 @@ describe('files that are not right', () => {
 
   it('a photo whose bytes are broken (CRC) or missing is left out; the shop is imported', async () => {
     const s = await createShopWithPhotos({ name: '写真の店' }, [photo(1), photo(2)])
-    const file = await exportShopCard(s.id, GCARD)
+    const file = await exportShopCard(s.id, ZIP)
     // break one byte inside the first photo's large image
     const buf = new Uint8Array(await file.blob.arrayBuffer())
     const needle = await bytesOf(photo(1).large)

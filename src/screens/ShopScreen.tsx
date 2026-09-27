@@ -4,7 +4,6 @@
 // for a missing rating). Shops from a friend (origin "shared") say "もらったお店" under the name.
 import { useEffect, useState } from 'react'
 import { PhotoCarousel } from '../components/PhotoCarousel'
-import { currentCardFileType } from '../components/share/FileTypeTrial'
 import { SendSheet } from '../components/share/SendSheet'
 import { Stars } from '../components/Stars'
 import { exportShopCard } from '../db/exportCards'
@@ -12,6 +11,7 @@ import { getPhotosForShop } from '../db/photos'
 import { deleteShop, getShop, updateShop } from '../db/shops'
 import { listTags } from '../db/tags'
 import type { Shop, Tag } from '../db/types'
+import { CARD_FILE_TYPE } from '../lib/cardFileType'
 import { useStationMaster } from '../hooks/useGeoMaster'
 import { findStation, stationLabel } from '../lib/geo'
 import { formatPlace, isOpenableUrl } from '../lib/shopView'
@@ -119,7 +119,7 @@ export function ShopScreen({ shopId, onBack, onDeleted, onEdit }: Props) {
       )}
 
       {sending && (
-        <SendSheet title="この店を送る" prepare={(onProgress) => exportShopCard(shopId, currentCardFileType(), onProgress)} onClose={() => setSending(false)} />
+        <SendSheet title="この店を送る" prepare={(onProgress) => exportShopCard(shopId, CARD_FILE_TYPE, onProgress)} onClose={() => setSending(false)} />
       )}
 
       {data.state === 'ok' && (

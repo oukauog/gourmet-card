@@ -32,20 +32,12 @@
 .data-section .btn-secondary {
   background: #fff;
 }
-.data-trial {
-  margin-top: 40px;
-  border: 1px dashed #c9c4bc;
-  background: none;
-}
-.data-trial-title {
-  margin: 0;
+/* under "グルメカードのファイルではありません" (construction 8a) */
+.data-hint {
+  margin: -4px 0 0;
   color: var(--c-sub);
-  font-size: 13px;
-  font-weight: 600;
-}
-.data-trial-options {
-  display: flex;
-  gap: 8px;
+  font-size: 12px;
+  line-height: 1.6;
 }
 
 /* ---------- send / import sheets ---------- */

@@ -85,7 +85,7 @@ test('send one shop -> save the file -> another phone imports it as 行きたい
   expect(await y('編集')).toBeLessThan(await y('この店を送る'))
   expect(await y('この店を送る')).toBeLessThan(await y('この店を削除'))
   const file = await saveFrom(page, 'この店を送る')
-  expect(file.name).toBe('グルメカード_白えび亭.gcard')
+  expect(file.name).toBe('グルメカード_白えび亭.zip')
 
   const p2 = await otherPhone(browser, info)
   await importFile(p2, file.path)
@@ -117,7 +117,7 @@ test('back up every shop -> another phone restores them into 手札 / 行きた�
   await expect(page.getByRole('heading', { level: 1, name: 'バックアップと取り込み' })).toBeVisible()
   await expect(page.getByTestId('last-backup')).toHaveText('まだバックアップしていません')
   const file = await saveFrom(page, '全店のバックアップを作る（3件）')
-  expect(file.name).toMatch(/^グルメカード_バックアップ_\d{8}-\d{4}\.gcard$/)
+  expect(file.name).toMatch(/^グルメカード_バックアップ_\d{8}-\d{4}\.zip$/)
   await sheet(page).press('Escape')
   await expect(page.getByTestId('last-backup')).toHaveText(/^最後のバックアップ：\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/)
 
@@ -194,7 +194,7 @@ async function fakeShare(page: Page, mode: 'ok' | 'abort' | 'fail') {
 }
 const shares = (page: Page) => page.evaluate(() => (window as unknown as { __shares: unknown[] }).__shares)
 
-test('share sheet: "共有メニューを開く" only after preparing, with one .gcard File; backup records the time', async ({ page }) => {
+test('share sheet: "共有メニューを開く" only after preparing, with one .zip File; backup records the time', async ({ page }) => {
   await fakeShare(page, 'ok')
   const [id] = await seed(page, [{ name: '共有する店', photos: 1 }])
   await page.goto(`/#/shop/${id}`)
@@ -207,7 +207,7 @@ test('share sheet: "共有メニューを開く" only after preparing, with one 
   await expect(sheet(page)).toHaveCount(0)
   const got = (await shares(page)) as { name: string; type: string; size: number; count: number }[]
   expect(got).toHaveLength(1)
-  expect(got[0]).toMatchObject({ name: 'グルメカード_共有する店.gcard', type: 'application/octet-stream', count: 1 })
+  expect(got[0]).toMatchObject({ name: 'グルメカード_共有する店.zip', type: 'application/zip', count: 1 })
   expect(got[0].size).toBeGreaterThan(1000)
 
   // a single shop does not count as a backup
@@ -253,27 +253,59 @@ test('without navigator.canShare there is no share button, only "ファイルと
   await expect(sheet(page).getByRole('button', { name: '共有メニューを開く' })).toHaveCount(0)
 })
 
-test('trial switch: .zip makes .zip files (application/zip), and a .zip file can be imported', async ({ page, browser }, info) => {
+// construction 8a: the extension is fixed to .zip; the trial switch is gone
+test('.zip only: one shop and the backup are .zip (application/zip); no trial switch; a file named .gcard still imports', async ({ page, browser }, info) => {
   await fakeShare(page, 'ok')
   const [id] = await seed(page, [{ name: 'ZIPの店', photos: 1 }])
   await page.goto('/#/data')
-  await expect(page.getByRole('radio', { name: '.gcard' })).toHaveAttribute('aria-checked', 'true')
-  await page.getByRole('radio', { name: '.zip' }).click()
-  await page.reload()
-  await expect(page.getByRole('radio', { name: '.zip' })).toHaveAttribute('aria-checked', 'true') // kept (localStorage)
+  await expect(page.getByRole('heading', { level: 1, name: 'バックアップと取り込み' })).toBeVisible()
+  await expect(page.getByText('送るファイルの形式（試験用）')).toHaveCount(0)
+  await expect(page.getByRole('radio', { name: '.gcard' })).toHaveCount(0)
+  await expect(page.getByRole('radio', { name: '.zip' })).toHaveCount(0)
+  await expect(page.getByText(/選ぶ画面の「最近使った項目」か、検索で「グルメカード」と入れると見つかります/)).toBeVisible()
 
+  // the backup through the share sheet
+  await page.getByRole('button', { name: /^全店のバックアップを作る/ }).click()
+  await sheet(page).getByRole('button', { name: '共有メニューを開く' }).click()
+  await expect(sheet(page)).toHaveCount(0)
+  // one shop through the share sheet
   await page.goto(`/#/shop/${id}`)
   await page.getByRole('button', { name: 'この店を送る' }).click()
   await sheet(page).getByRole('button', { name: '共有メニューを開く' }).click()
-  await expect.poll(async () => ((await shares(page)) as { name: string }[]).map((s) => s.name)).toEqual(['グルメカード_ZIPの店.zip'])
-  expect(((await shares(page)) as { type: string }[])[0].type).toBe('application/zip')
+  await expect(sheet(page)).toHaveCount(0)
+  const got = (await shares(page)) as { name: string; type: string }[]
+  expect(got).toHaveLength(2)
+  expect(got[0].name).toMatch(/^グルメカード_バックアップ_\d{8}-\d{4}\.zip$/)
+  expect(got[1].name).toBe('グルメカード_ZIPの店.zip')
+  expect(got.map((g) => g.type)).toEqual(['application/zip', 'application/zip'])
 
-  await expect(sheet(page)).toHaveCount(0) // closes by itself after "送りました"
+  // saved: .zip; the same bytes under a .gcard name (a file kept from construction 8) import too
   const file = await saveFrom(page, 'この店を送る')
   expect(file.name).toBe('グルメカード_ZIPの店.zip')
+  const fs = await import('node:fs')
+  const old = info.outputPath('グルメカード_ZIPの店.gcard')
+  fs.copyFileSync(file.path, old)
   const p2 = await otherPhone(browser, info)
-  await importFile(p2, file.path)
+  await importFile(p2, old)
+  await expect(sheet(p2).getByText('新しいお店 1件')).toBeVisible()
   await sheet(p2).getByRole('button', { name: '取り込む（1件）' }).click()
   await expect(sheet(p2).getByTestId('import-result')).toHaveText('1件取り込みました')
   await p2.context().close()
+})
+
+test('not a card file: the message, and under it how to pick the .zip itself (not the folder the Files app made)', async ({ page }, info) => {
+  await page.goto('/#/data')
+  const path = info.outputPath('memo.txt')
+  const fs = await import('node:fs')
+  fs.writeFileSync(path, 'hello')
+  const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.getByRole('button', { name: 'ファイルから取り込む' }).click()])
+  await chooser.setFiles(path)
+  await expect(page.getByRole('alert')).toHaveText('グルメカードのファイルではありません')
+  const hint = page.getByText('「ファイル」アプリで .zip をタップすると中身のフォルダができます。取り込むのはフォルダの中ではなく、.zip のファイルそのものです')
+  await expect(hint).toBeVisible()
+  // under the message, in small text
+  const a = (await page.getByRole('alert').boundingBox())!
+  const h = (await hint.boundingBox())!
+  expect(h.y).toBeGreaterThanOrEqual(a.y + a.height - 1)
+  expect(await hint.evaluate((el) => parseFloat(getComputedStyle(el).fontSize))).toBeLessThan(14)
 })

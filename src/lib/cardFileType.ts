@@ -1,14 +1,8 @@
 // The ONE place for the extension and MIME type of the card file (spec 4.5.2 / 5).
-// Construction 8 tries both on real iPhones (trial switch on the data screen); construction 8a
-// keeps one of them: delete the other entry here and the trial switch
-// (src/components/share/FileTypeTrial.tsx).
+// Construction 8a fixed it to .zip (the trial of construction 8 found both candidates about the
+// same on real iPhones). Importing never looks at the extension: ZIP + manifest.json decide, so
+// the files written during construction 8 under the other extension still import.
 
-export const CARD_FILE_TYPES = {
-  gcard: { extension: '.gcard', mime: 'application/octet-stream' },
-  zip: { extension: '.zip', mime: 'application/zip' },
-} as const
+export const CARD_FILE_TYPE = { extension: '.zip', mime: 'application/zip' } as const
 
-export type CardFileTypeKey = keyof typeof CARD_FILE_TYPES
-export type CardFileType = (typeof CARD_FILE_TYPES)[CardFileTypeKey]
-
-export const DEFAULT_CARD_FILE_TYPE: CardFileTypeKey = 'gcard'
+export type CardFileType = typeof CARD_FILE_TYPE

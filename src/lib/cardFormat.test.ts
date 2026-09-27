@@ -18,9 +18,9 @@ describe('file names', () => {
 
   it('share / backup names with the extension', () => {
     const at = new Date('2026-09-27T12:05:00.000Z')
-    expect(cardFileName('share', '.gcard', at, '白えび亭')).toBe('グルメカード_白えび亭.gcard')
+    expect(cardFileName('share', '.zip', at, '白えび亭')).toBe('グルメカード_白えび亭.zip')
     expect(cardFileName('share', '.zip', at, 'a/b')).toBe('グルメカード_a_b.zip')
-    expect(cardFileName('backup', '.gcard', at)).toBe('グルメカード_バックアップ_20260927-2105.gcard')
+    expect(cardFileName('backup', '.zip', at)).toBe('グルメカード_バックアップ_20260927-2105.zip')
   })
 })
 

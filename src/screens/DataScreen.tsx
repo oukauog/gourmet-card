@@ -1,7 +1,6 @@
 // "バックアップと取り込み" (#/data, construction 8, spec 4.5.2): back up every shop, import a
-// file, and (trial, construction 8 only) the extension switch.
+// file. (The trial extension switch of construction 8 was removed in construction 8a: .zip.)
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { FileTypeTrial, currentCardFileType } from '../components/share/FileTypeTrial'
 import { ImportSheet } from '../components/share/ImportSheet'
 import { SendSheet } from '../components/share/SendSheet'
 import { exportBackup } from '../db/exportCards'
@@ -9,6 +8,7 @@ import { previewCard, type CardPreview } from '../db/importCards'
 import { getSetting, setSetting } from '../db/settings'
 import { countShops } from '../db/shops'
 import type { ShopStatus } from '../db/types'
+import { CARD_FILE_TYPE } from '../lib/cardFileType'
 import { CardFileError } from '../lib/cardFormat'
 import { nowIso } from '../lib/time'
 import { formatJst } from '../lib/version'
@@ -22,12 +22,15 @@ interface Props {
   onDataChanged: () => void
 }
 
+// often the cause on iPhone: a folder the Files app made by tapping the .zip was chosen
+const NOT_CARD_HINT = '「ファイル」アプリで .zip をタップすると中身のフォルダができます。取り込むのはフォルダの中ではなく、.zip のファイルそのものです'
+
 export function DataScreen({ onBack, onOpenShop, onOpenList, onDataChanged }: Props) {
   const [shopCount, setShopCount] = useState<number>()
   const [lastBackupAt, setLastBackupAt] = useState<string | null>()
   const [sending, setSending] = useState(false)
   const [reading, setReading] = useState(false)
-  const [readError, setReadError] = useState<{ message: string; detail?: string }>()
+  const [readError, setReadError] = useState<{ message: string; detail?: string; hint?: string }>()
   const [preview, setPreview] = useState<CardPreview>()
   const fileInput = useRef<HTMLInputElement>(null)
 
@@ -66,7 +69,7 @@ export function DataScreen({ onBack, onOpenShop, onOpenList, onDataChanged }: Pr
       setPreview(await previewCard(file))
     } catch (e) {
       console.error(e)
-      if (e instanceof CardFileError) setReadError({ message: e.userMessage })
+      if (e instanceof CardFileError) setReadError({ message: e.userMessage, hint: e.code === 'not-card' ? NOT_CARD_HINT : undefined })
       else setReadError({ message: 'ファイルを読めませんでした', detail: e instanceof Error ? e.name : String(e) })
     } finally {
       setReading(false)
@@ -100,7 +103,7 @@ export function DataScreen({ onBack, onOpenShop, onOpenList, onDataChanged }: Pr
         <h2 className="data-title" id="data-import-title">
           取り込む
         </h2>
-        <p className="data-text">友だちから届いたファイルは、LINE なら開いて「ファイルに保存」、AirDrop なら「ファイル」アプリに入ります。そのあとここで選んでください。</p>
+        <p className="data-text">友だちから届いたファイルは、LINE なら開いて「ファイルに保存」、AirDrop なら「ファイル」アプリに入ります。選ぶ画面の「最近使った項目」か、検索で「グルメカード」と入れると見つかります。</p>
         <button type="button" className="btn btn-secondary btn-block" disabled={reading} onClick={() => fileInput.current?.click()}>
           {reading ? '読み込んでいます…' : 'ファイルから取り込む'}
         </button>
@@ -122,14 +125,13 @@ export function DataScreen({ onBack, onOpenShop, onOpenList, onDataChanged }: Pr
             {readError.detail && <p className="error-detail">{readError.detail}</p>}
           </div>
         )}
+        {readError?.hint && <p className="data-hint">{readError.hint}</p>}
       </section>
-
-      <FileTypeTrial />
 
       {sending && (
         <SendSheet
           title="全店のバックアップ"
-          prepare={(onProgress) => exportBackup(currentCardFileType(), onProgress)}
+          prepare={(onProgress) => exportBackup(CARD_FILE_TYPE, onProgress)}
           onDelivered={() => void onBackupDelivered()}
           onClose={() => setSending(false)}
         />
