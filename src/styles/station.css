@@ -1,7 +1,8 @@
 /* 最寄り駅 / 市 / attribution in the form (construction 7). Base: form.css, app.css. */
 
+/* scrolled to the top on focus: keep the label visible */
 .station-input {
-  scroll-margin-top: 12px;
+  scroll-margin-top: 36px;
 }
 .station-list {
   display: flex;
@@ -13,7 +14,7 @@
 }
 .station-candidate {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 8px;
   min-height: 46px;
   padding: 0 14px;
