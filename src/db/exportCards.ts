@@ -8,7 +8,7 @@ import type { CardFileType } from '../lib/cardFileType'
 import { nowIso } from '../lib/time'
 import { buildZip, type ZipEntrySource } from '../lib/zipStore'
 import { db } from './db'
-import { RecordNotFoundError } from './errors'
+import { RecordNotFoundError, ValidationError } from './errors'
 import type { Shop, Tag } from './types'
 
 export interface ExportProgress {
@@ -35,6 +35,7 @@ async function writeCard(
   fileType: CardFileType,
   onProgress?: (p: ExportProgress) => void,
   shopNameForFile?: string,
+  otherShopsForFile = 0,
 ): Promise<CardExport> {
   const exportedAt = nowIso()
   // photo records hold Blob references only (the bytes are read when their entry is written)
@@ -69,7 +70,7 @@ async function writeCard(
   })
   return {
     blob,
-    fileName: cardFileName(kind, fileType.extension, new Date(exportedAt), shopNameForFile),
+    fileName: cardFileName(kind, fileType.extension, new Date(exportedAt), shopNameForFile, otherShopsForFile),
     mime: fileType.mime,
     kind,
     shopCount: shops.length,
@@ -84,6 +85,24 @@ export async function exportShopCard(shopId: string, fileType: CardFileType, onP
   const tagIds = [...shop.genreTagIds, ...shop.useTagIds, ...shop.areaTagIds]
   const tags = (await db.tags.bulkGet([...new Set(tagIds)])).filter((t): t is Tag => t !== undefined)
   return writeCard('share', [shop], tags, fileType, onProgress, shop.name)
+}
+
+/**
+ * Several shops to send to a friend (kind "share", construction 8b): the shops in the given order
+ * (a repeated id counts once) and only the tags on them. No id: ValidationError; an unknown id:
+ * RecordNotFoundError. File name: like one shop, or グルメカード_<first>ほかN店.zip.
+ */
+export async function exportShopsCard(shopIds: readonly string[], fileType: CardFileType, onProgress?: (p: ExportProgress) => void): Promise<CardExport> {
+  const ids = [...new Set(shopIds)]
+  if (ids.length === 0) throw new ValidationError('no shop to send')
+  const found = await db.shops.bulkGet(ids)
+  const shops = found.map((s, i) => {
+    if (!s) throw new RecordNotFoundError(`shop not found: ${ids[i]}`)
+    return s
+  })
+  const tagIds = [...new Set(shops.flatMap((s) => [...s.genreTagIds, ...s.useTagIds, ...s.areaTagIds]))]
+  const tags = (await db.tags.bulkGet(tagIds)).filter((t): t is Tag => t !== undefined)
+  return writeCard('share', shops, tags, fileType, onProgress, shops[0].name, shops.length - 1)
 }
 
 /** Every shop, every photo and every tag (kind "backup"). */

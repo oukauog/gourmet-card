@@ -210,7 +210,13 @@ export function fileNamePart(name: string): string {
   return cut.replace(/^\.+/, '_') || '_'
 }
 
-/** グルメカード_<店名><ext> / グルメカード_バックアップ_YYYYMMDD-HHmm<ext>. */
-export function cardFileName(kind: CardKind, extension: string, at: Date, shopName?: string): string {
-  return kind === 'share' ? `グルメカード_${fileNamePart(shopName ?? '')}${extension}` : `グルメカード_バックアップ_${jstStamp(at)}${extension}`
+/**
+ * グルメカード_<店名><ext> / グルメカード_バックアップ_YYYYMMDD-HHmm<ext>.
+ * Several shops (construction 8b): グルメカード_<first shop's name>ほかN店<ext> (N = the other
+ * shops); only the name part is shortened, "ほかN店" is never cut.
+ */
+export function cardFileName(kind: CardKind, extension: string, at: Date, shopName?: string, otherShops = 0): string {
+  if (kind === 'backup') return `グルメカード_バックアップ_${jstStamp(at)}${extension}`
+  const others = otherShops > 0 ? `ほか${otherShops}店` : ''
+  return `グルメカード_${fileNamePart(shopName ?? '')}${others}${extension}`
 }
