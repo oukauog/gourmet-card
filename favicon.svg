@@ -1,20 +1,63 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <!-- 案A: overlapping cards (slightly tilted) + chopsticks resting beside them.
-       Full bleed, no corner radius; the drawing stays inside the centre 80% circle. -->
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512">
+  <!-- Hand of cards, fan: sushi, yakiniku, ramen (front). Full bleed, no corner radius, no text; inside the centre 80% circle. -->
   <rect width="512" height="512" fill="#d9480f"/>
-  <g transform="rotate(-14 232 262)">
-    <rect x="126" y="136" width="200" height="252" rx="22" fill="#ffd8bd"/>
+  <defs>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#5a1a00" flood-opacity="0.35"/>
+    </filter>
+    <!-- ramen: red bowl, orange broth, naruto and a boiled egg (flat, big shapes) -->
+    <g id="ramen">
+      <rect x="-68" y="-98" width="136" height="136" rx="14" fill="#fff1d6"/>
+      <path d="M-58 -36 H58 A58 54 0 0 1 -58 -36 Z" fill="#c92a2a"/>
+      <rect x="-62" y="-44" width="124" height="14" rx="7" fill="#a51d1d"/>
+      <ellipse cx="0" cy="-44" rx="56" ry="15" fill="#f2b84b"/>
+      <path d="M-40 -48 q10 -40 20 0 q10 -40 20 0 q10 -40 20 0" fill="none" stroke="#f7d774" stroke-width="10" stroke-linecap="round"/>
+      <circle cx="-26" cy="-46" r="13" fill="#ffffff"/>
+      <circle cx="-26" cy="-46" r="5.5" fill="#f06595"/>
+      <ellipse cx="26" cy="-46" rx="15" ry="11" fill="#ffffff"/>
+      <circle cx="26" cy="-46" r="6.5" fill="#ffae00"/>
+    </g>
+    <!-- sushi: one salmon nigiri on rice -->
+    <g id="sushi">
+      <rect x="-68" y="-98" width="136" height="136" rx="14" fill="#dcefff"/>
+      <rect x="-50" y="-30" width="100" height="42" rx="20" fill="#ffffff" stroke="#b9c9dc" stroke-width="5"/>
+      <rect x="-60" y="-66" width="120" height="44" rx="21" fill="#ff7a45"/>
+      <rect x="-24" y="-68" width="11" height="48" rx="5" fill="#ffc9ad" transform="rotate(-22 -18 -44)"/>
+      <rect x="12" y="-68" width="11" height="48" rx="5" fill="#ffc9ad" transform="rotate(-22 18 -44)"/>
+    </g>
+    <!-- yakiniku: a round grill with bars and two pieces of meat -->
+    <g id="yakiniku">
+      <rect x="-68" y="-98" width="136" height="136" rx="14" fill="#fde4d8"/>
+      <circle cx="0" cy="-30" r="56" fill="#3a3a3a"/>
+      <rect x="-54" y="-50" width="108" height="9" rx="4" fill="#707070"/>
+      <rect x="-56" y="-34" width="112" height="9" rx="4" fill="#707070"/>
+      <rect x="-54" y="-18" width="108" height="9" rx="4" fill="#707070"/>
+      <g transform="rotate(-16 -16 -46)">
+        <rect x="-44" y="-62" width="56" height="30" rx="11" fill="#b02a2a"/>
+        <rect x="-38" y="-51" width="44" height="8" rx="4" fill="#f4a3a3"/>
+      </g>
+      <g transform="rotate(14 16 -14)">
+        <rect x="-12" y="-30" width="56" height="30" rx="11" fill="#b02a2a"/>
+        <rect x="-6" y="-19" width="44" height="8" rx="4" fill="#f4a3a3"/>
+      </g>
+    </g>
+  </defs>
+  <g transform="rotate(-21 256 440) translate(256 266) scale(1.05)">
+      <g filter="url(#shadow)">
+        <rect x="-85" y="-115" width="170" height="230" rx="20" fill="#ffffff"/>
+      </g>
+      <use href="#sushi" transform="translate(0 22) scale(1.22)"/>
   </g>
-  <g transform="rotate(6 232 262)">
-    <rect x="140" y="128" width="200" height="252" rx="22" fill="#ffffff"/>
-    <rect x="160" y="148" width="160" height="128" rx="12" fill="#f5a623"/>
-    <circle cx="206" cy="204" r="26" fill="#fff4e0"/>
-    <rect x="160" y="296" width="120" height="16" rx="8" fill="#e9dccf"/>
-    <rect x="160" y="326" width="84" height="16" rx="8" fill="#e9dccf"/>
+  <g transform="rotate(0 256 440) translate(256 266) scale(1.05)">
+      <g filter="url(#shadow)">
+        <rect x="-85" y="-115" width="170" height="230" rx="20" fill="#ffffff"/>
+      </g>
+      <use href="#yakiniku" transform="translate(0 22) scale(1.22)"/>
   </g>
-  <!-- chopsticks: tapered, from the lower right upwards -->
-  <g fill="#3b2418">
-    <polygon points="0,-9 300,-4.5 300,4.5 0,9" transform="translate(318 420) rotate(-70)"/>
-    <polygon points="0,-9 300,-4.5 300,4.5 0,9" transform="translate(350 428) rotate(-74)"/>
+  <g transform="rotate(21 256 440) translate(256 266) scale(1.05)">
+      <g filter="url(#shadow)">
+        <rect x="-85" y="-115" width="170" height="230" rx="20" fill="#ffffff"/>
+      </g>
+      <use href="#ramen" transform="translate(0 22) scale(1.22)"/>
   </g>
 </svg>
