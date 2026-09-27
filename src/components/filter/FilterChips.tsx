@@ -1,4 +1,4 @@
-import type { ShopFilter } from '../../lib/shopFilter'
+import { PLACE_LIST_KEYS, type ShopFilter } from '../../lib/shopFilter'
 
 export type FilterPanelKind = 'place' | 'genre' | 'use' | 'rating'
 
@@ -12,7 +12,7 @@ interface Props {
 /** Horizontal chip row: 場所 / ジャンル / 使い道 / 評価 (open a panel) and 未評価のみ (on/off). */
 export function FilterChips({ filter, labels, onOpen, onToggleUnrated }: Props) {
   const active: Record<FilterPanelKind, boolean> = {
-    place: filter.prefectures.length > 0 || filter.areaTagIds.length > 0,
+    place: PLACE_LIST_KEYS.some((k) => filter[k].length > 0),
     genre: filter.genreTagIds.length > 0,
     use: filter.useTagIds.length > 0,
     rating: filter.minRating !== undefined,
