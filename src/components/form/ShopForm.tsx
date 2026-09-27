@@ -7,6 +7,7 @@ import { isOpenableUrl } from '../../lib/shopView'
 import { PhotoPicker } from '../PhotoPicker'
 import { GeoCredits } from './GeoCredits'
 import { PlaceFields } from './PlaceFields'
+import { VersionLine } from './VersionLine'
 import { RatingInput } from './RatingInput'
 import { TagInput } from './TagInput'
 import { UseTagPicker } from './UseTagPicker'
@@ -181,6 +182,7 @@ export function ShopForm({ title, initialValues, initialPhotos = [], confirmDisc
         </div>
 
         <GeoCredits />
+        <VersionLine />
 
         {error && (
           <div role="alert">

@@ -76,3 +76,7 @@
 .geo-credits a {
   color: inherit;
 }
+/* version line right under the credits (the form has a 16px gap between items; construction 8p) */
+.app-version {
+  margin-top: -14px;
+}
