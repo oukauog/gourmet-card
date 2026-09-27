@@ -31,3 +31,6 @@ npm-debug.log*
 Thumbs.db
 *.suo
 *.sw?
+
+# Cowork app output folder (files from the advisor; not part of the repo)
+Claude outputs/
