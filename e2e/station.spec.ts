@@ -207,6 +207,33 @@ test('the list does not read the station master unless a shop of the tab has a s
   expect(requests.filter((u) => u.includes('stations.json')).length).toBeGreaterThan(0)
 })
 
+// ---------- construction 7a: other names of a station group ----------
+
+test('淡路町 (in the 御茶ノ水 group) is a station of its own: 東京都 / 千代田区, shown on the shop page', async ({ page }) => {
+  await openRegister(page)
+  await stationBox(page).fill('淡路町')
+  const row = candidate(page, '淡路町駅')
+  await expect(row).toHaveCount(1)
+  await expect(row.locator('.station-candidate-place')).toHaveText('東京都千代田区')
+  await row.click()
+  await expect(chosen(page)).toHaveText('淡路町駅')
+  await expect(pref(page)).toHaveValue('東京都')
+  await expect(city(page)).toHaveValue('千代田区')
+  await save(page, '淡路町の店')
+  await expect(place(page)).toContainText('東京都 千代田区')
+  await expect(place(page).locator('.shop-station')).toHaveText('淡路町駅')
+  expect(await dbShop(page, '淡路町の店')).toMatchObject({ stationId: await stationId(page, '淡路町', '東京都') })
+})
+
+test('小川町 lists 東京都 and 埼玉県 separately', async ({ page }) => {
+  await openRegister(page)
+  await stationBox(page).fill('小川町')
+  await expect(candidate(page, '小川町駅（東京都）')).toHaveCount(1)
+  await expect(candidate(page, '小川町駅（埼玉県）')).toHaveCount(1)
+  await expect(candidate(page, '小川町駅（東京都）').locator('.station-candidate-place')).toHaveText('東京都千代田区')
+  await expect(candidate(page, '小川町駅（埼玉県）').locator('.station-candidate-place')).toHaveText('埼玉県小川町')
+})
+
 // ---------- filter ----------
 
 const chip = (page: Page, kind: string) => page.getByTestId('filter-chips').locator(`[data-kind="${kind}"]`)
