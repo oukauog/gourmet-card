@@ -48,9 +48,10 @@ export default defineConfig(({ command, isPreview }) => {
           ],
         },
         workbox: {
-          // the app, its CSS, index.html, icons, the manifest and the station / municipality
-          // masters (separate JS files, construction 7). No other site is ever cached.
-          globPatterns: ['**/*.{js,css,html,svg,png,webmanifest}'],
+          // the app (JS, including the station / municipality masters of construction 7), its CSS
+          // and index.html; the plugin adds the manifest, its icons and includeAssets. No other
+          // site is ever cached.
+          globPatterns: ['**/*.{js,css,html}'],
           cleanupOutdatedCaches: true,
           navigateFallback: 'index.html',
           runtimeCaching: [],
