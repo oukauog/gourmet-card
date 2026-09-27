@@ -45,6 +45,30 @@
 }
 
 /* ---------- count row: "表示中をすべて選ぶ" ---------- */
+/* With one more button the row can get too long (e.g. "4件（11件中）" + 条件を解除 + sort):
+   items never break inside; "表示中をすべて選ぶ" takes a second line of the row. */
+.home-screen.selecting .list-meta {
+  flex-wrap: wrap;
+  row-gap: 0;
+}
+.home-screen.selecting .list-meta > * {
+  white-space: nowrap;
+}
+.home-screen.selecting .list-select-all {
+  order: 10;
+  flex-basis: 100%;
+  padding-left: 0;
+  text-align: left;
+}
+@media (max-width: 389px) {
+  .list-meta {
+    flex-wrap: wrap;
+    row-gap: 0;
+  }
+  .list-meta > * {
+    white-space: nowrap;
+  }
+}
 .list-select-all {
   min-height: 32px;
   padding: 0 6px;
