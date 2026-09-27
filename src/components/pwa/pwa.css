@@ -1,0 +1,18 @@
+/* Data screen additions (construction 9): storage section, version at the bottom. */
+.data-subtitle {
+  margin: 8px 0 0;
+  font-size: 15px;
+}
+.data-steps {
+  margin: -4px 0 0;
+  padding-left: 1.4em;
+  color: var(--c-sub);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.app-version-footer {
+  margin: 24px 0 0;
+  color: #9a9590;
+  font-size: 11px;
+  text-align: center;
+}

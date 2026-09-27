@@ -1,0 +1,76 @@
+/* DEV ONLY: icon samples (construction 9). */
+.icon-samples {
+  margin-top: 32px;
+  padding: 12px;
+  border: 1px dashed #c9c4bc;
+  border-radius: 14px;
+}
+.icon-samples-title {
+  margin: 0;
+  font-size: 15px;
+}
+.icon-samples-note {
+  margin: 4px 0 10px;
+  color: var(--c-sub);
+  font-size: 12px;
+}
+.icon-wall {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px 0;
+  margin-bottom: 10px;
+  padding: 18px 8px;
+  border-radius: 16px;
+}
+.icon-wall-light {
+  background: linear-gradient(160deg, #cfe8ff, #fde2e4 60%, #fff1c9);
+}
+.icon-wall-dark {
+  background: linear-gradient(160deg, #0b1d3a, #2b1b3f 60%, #1b2b24);
+}
+.icon-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+.icon-app {
+  display: block;
+  width: 60px;
+  height: 60px;
+  border-radius: 13.5px; /* iPhone-like rounding (about 22.5%) */
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.15);
+}
+.icon-name {
+  font-size: 11px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.icon-wall-light .icon-name {
+  color: #1c1c1e;
+}
+.icon-wall-dark .icon-name {
+  color: #fff;
+}
+/* 180px each (3 do not fit in 390px: the row scrolls sideways) */
+.icon-large-row {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+}
+.icon-large {
+  margin: 0;
+  text-align: center;
+}
+.icon-large img {
+  display: block;
+  width: 180px;
+  height: 180px;
+  border-radius: 40px;
+}
+.icon-large figcaption {
+  margin-top: 4px;
+  color: var(--c-sub);
+  font-size: 11px;
+}

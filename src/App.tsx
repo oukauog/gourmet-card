@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Toast } from './components/Toast'
 import { db } from './db/db'
 import { seedUseTags } from './db/seedUseTags'
+import { requestPersistOnce } from './pwa/persist'
+import { startPwa } from './pwa/registerPwa'
 import { navigate, replaceRoute, useHashRoute } from './router/useHashRoute'
 import { DataScreen } from './screens/DataScreen'
 import { EditScreen } from './screens/EditScreen'
@@ -28,6 +30,9 @@ function App() {
         // initial use tags, once (errors are only logged: the app works without them)
         await seedUseTags().catch((e: unknown) => console.error(e))
         setDbState('ready')
+        // construction 9: keep the data (asked once, when there are shops) / updates (build only)
+        void requestPersistOnce()
+        startPwa()
       },
       (e: unknown) => {
         console.error(e)

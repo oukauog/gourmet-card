@@ -1,0 +1,90 @@
+/* The one thin bar above the list / on the data screen, and the install guide sheet
+   (construction 9, spec 4.6). Quiet: pale ground, small text, × at the right. */
+.app-banner {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  margin: 2px 0 6px;
+  padding: 0 4px 0 12px;
+  border-radius: 10px;
+  background: #fff4e6;
+  color: var(--c-text);
+  font-size: 13px;
+}
+.app-banner-text {
+  flex: 1;
+  min-width: 0;
+}
+.app-banner-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 36px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.app-banner-go {
+  color: var(--c-accent);
+  font-size: 16px;
+  font-weight: 700;
+}
+.app-banner-action {
+  flex: none;
+  min-height: 30px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--c-accent);
+  color: #fff;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.app-banner-close {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--c-sub);
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.install-guide {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-bottom: 4px;
+}
+.install-device {
+  margin: 0;
+  color: var(--c-sub);
+  font-size: 13px;
+  font-weight: 600;
+}
+.install-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding-left: 1.4em;
+  font-size: 16px;
+  line-height: 1.5;
+}
+.install-note {
+  margin: 0;
+  color: #b35c00;
+  font-size: 13px;
+  line-height: 1.6;
+}

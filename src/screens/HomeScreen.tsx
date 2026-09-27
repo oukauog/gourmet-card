@@ -4,6 +4,7 @@ import { FilterPanel, type PanelKind } from '../components/filter/FilterPanel'
 import { ListTabs } from '../components/filter/ListTabs'
 import { pageScrollY } from '../components/filter/scrollLock'
 import { SORT_LABELS } from '../components/filter/sortLabels'
+import { ListBanner } from '../components/banner/ListBanner'
 import { SelectHeader } from '../components/select/SelectHeader'
 import { SelectSendBar } from '../components/select/SelectSendBar'
 import { useShopSelection } from '../components/select/useShopSelection'
@@ -273,6 +274,9 @@ export function HomeScreen({ onAdd, onOpenShop, onOpenData }: Props) {
         </div>
       </header>
       )}
+
+      {/* construction 9: at most one thin bar (update / add to home screen / backup reminder) */}
+      <ListBanner shopCount={data?.rows.length ?? 0} ready={ready} selecting={selection.selecting} onOpenData={() => onOpenData?.()} />
 
       <ListTabs value={tab} counts={view.counts} onChange={changeTab} />
 

@@ -1,6 +1,9 @@
 // "バックアップと取り込み" (#/data, construction 8, spec 4.5.2): back up every shop, import a
 // file. (The trial extension switch of construction 8 was removed in construction 8a: .zip.)
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
+import { DataUpdateBar } from '../components/banner/DataUpdateBar'
+import { AppVersionFooter } from '../components/pwa/AppVersionFooter'
+import { StorageSection } from '../components/pwa/StorageSection'
 import { ImportSheet } from '../components/share/ImportSheet'
 import { SendSheet } from '../components/share/SendSheet'
 import { exportBackup } from '../db/exportCards'
@@ -13,6 +16,9 @@ import { CardFileError } from '../lib/cardFormat'
 import { nowIso } from '../lib/time'
 import { formatJst } from '../lib/version'
 import '../styles/data.css'
+
+// DEV only (construction 9, until 9a): icon samples; lazy and only in dev, so not in the build
+const IconSamples = import.meta.env.DEV ? lazy(() => import('../dev/IconSamples').then((m) => ({ default: m.IconSamples }))) : null
 
 interface Props {
   onBack: () => void
@@ -86,6 +92,8 @@ export function DataScreen({ onBack, onOpenShop, onOpenList, onDataChanged }: Pr
         <span className="topbar-spacer" />
       </header>
 
+      <DataUpdateBar />
+
       <section className="data-section" aria-labelledby="data-backup-title">
         <h2 className="data-title" id="data-backup-title">
           バックアップ
@@ -127,6 +135,16 @@ export function DataScreen({ onBack, onOpenShop, onOpenList, onDataChanged }: Pr
         )}
         {readError?.hint && <p className="data-hint">{readError.hint}</p>}
       </section>
+
+      <StorageSection />
+
+      <AppVersionFooter />
+
+      {IconSamples && (
+        <Suspense fallback={null}>
+          <IconSamples />
+        </Suspense>
+      )}
 
       {sending && (
         <SendSheet
