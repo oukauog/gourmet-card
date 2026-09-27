@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest'
 import cityJson from '../data/cities.json'
 import stationJson from '../data/stations.json'
+import added07a from './fixtures/stations-added-07a.json'
 import before from './fixtures/stations-before-07a.json'
 import { buildStationMaster, stationChoiceLabel, suggestStations, type CityTable, type StationTable } from './geo'
 
@@ -19,13 +20,41 @@ describe('regression: every station of construction 7 is unchanged', () => {
     expect(changed).toEqual([])
   })
 
-  it('only additions: 200 stations of other names, ids never reused', () => {
+  it('only additions: 197 stations of other names (construction 7b: 200 - 3), ids never reused', () => {
     const old = new Set(BEFORE.map(([id]) => id))
     const added = M.stations.filter((s) => !old.has(s.id))
-    expect(added).toHaveLength(200)
+    expect(added).toHaveLength(197)
     expect(added.every((s) => /^\d+$/.test(s.id))).toBe(true)
-    expect(M.stations).toHaveLength(8983)
+    expect(M.stations).toHaveLength(8980)
     expect(new Set(M.stations.map((s) => s.id)).size).toBe(M.stations.length)
+  })
+})
+
+describe('construction 7b: other names with the same name in the prefecture are not added', () => {
+  const ADDED_07A = added07a as unknown as [string, string, string, string | null][]
+  const REMOVED = ['9921410', '3500103', '9962113'] // 仙台 (あおば通), 野田 (海老江), 高井田 (高井田中央)
+
+  it('the other 197 stations added in 7a keep id, name, prefecture and city; exactly 3 are gone', () => {
+    expect(ADDED_07A).toHaveLength(200)
+    const kept = ADDED_07A.filter(([id]) => !REMOVED.includes(id))
+    expect(kept).toHaveLength(197)
+    const changed = kept.filter(([id, name, prefecture, city]) => {
+      const s = M.byId.get(id)
+      return !s || s.name !== name || s.prefecture !== prefecture || (s.city ?? null) !== city
+    })
+    expect(changed).toEqual([])
+    expect(REMOVED.map((id) => M.byId.get(id))).toEqual([undefined, undefined, undefined])
+    expect(ADDED_07A.filter(([id]) => REMOVED.includes(id)).map(([, n]) => n).sort()).toEqual(['仙台', '野田', '高井田'].sort())
+  })
+
+  it('仙台 / 野田 / 高井田: one station per prefecture (the representatives stay)', () => {
+    const sendai = suggestStations(M, '仙台').filter((s) => s.name === '仙台' && s.prefecture === '宮城県')
+    expect(sendai.map((s) => [s.id, s.city])).toEqual([['1123143', '仙台市']])
+    expect(named('野田').filter((s) => s.prefecture === '大阪府').map((s) => [s.id, s.city])).toEqual([['1162308', '大阪市']])
+    // the representative 高井田 (JR) is in 柏原市; the removed 高井田 (Osaka Metro, 東大阪市) sits
+    // next to 高井田中央, the representative of its group
+    expect(named('高井田').filter((s) => s.prefecture === '大阪府').map((s) => [s.id, s.city])).toEqual([['1160711', '柏原市']])
+    expect(named('高井田中央').map((s) => s.city)).toEqual(['東大阪市'])
   })
 })
 

@@ -158,6 +158,8 @@ function buildStations(cities) {
   const stations = []
   const aliases = []
   const keptNames = []
+  const pending = [] // other names, added after every representative is known (construction 7b)
+  const skippedAliases = []
   for (const [gcd, list] of [...groups].sort((a, b) => byNumber(a[0], b[0]))) {
     list.sort(order)
     // The row of the group code itself (the representative station) when it is in service;
@@ -188,16 +190,29 @@ function buildStations(cities) {
       const cur = others.get(k)
       if (!cur || byNumber(r.station_cd, cur.station_cd) < 0) others.set(k, r)
     }
-    for (const r of [...others.values()].sort((a, b) => byNumber(a.station_cd, b.station_cd))) {
-      const ap = Number(r.pref_cd) - 1
-      if (!(ap >= 0 && ap < PREFECTURES.length)) fail(`station ${r.station_cd}: pref_cd out of range`)
-      const aCity = cityOfAddress(PREFECTURES[ap], r[addrKey], cities[ap])
-      if (!aCity) unmatched.push({ id: r.station_cd, name: r.station_name, prefecture: PREFECTURES[ap], address: r[addrKey] })
-      stations.push({ id: r.station_cd, name: r.station_name, p: ap, city: aCity })
-      aliases.push({ id: r.station_cd, name: r.station_name, prefecture: PREFECTURES[ap], city: aCity ?? null, groupId: gcd, representative: rep.station_name })
-    }
+    for (const r of others.values()) pending.push({ r, gcd, representative: rep.station_name })
   }
-  return { csvName, rowCount: rows.length, activeCount: active.length, groupCount: groups.size, stations, unmatched, multiName, aliases, keptNames }
+
+  // Construction 7b: an other name is NOT added when its prefecture already has a station of the
+  // same name (by nameKey) - a representative, or another other name with a smaller station_cd.
+  const placeKey = (p, name) => `${p}\t${nameKey(name)}`
+  const taken = new Map(stations.map((s) => [placeKey(s.p, s.name), { id: s.id, kind: 'representative' }]))
+  for (const { r, gcd, representative } of pending.sort((a, b) => byNumber(a.r.station_cd, b.r.station_cd))) {
+    const ap = Number(r.pref_cd) - 1
+    if (!(ap >= 0 && ap < PREFECTURES.length)) fail(`station ${r.station_cd}: pref_cd out of range`)
+    const aCity = cityOfAddress(PREFECTURES[ap], r[addrKey], cities[ap])
+    const k = placeKey(ap, r.station_name)
+    const existing = taken.get(k)
+    if (existing) {
+      skippedAliases.push({ id: r.station_cd, name: r.station_name, prefecture: PREFECTURES[ap], city: aCity ?? null, groupId: gcd, representative, existingId: existing.id, existingKind: existing.kind })
+      continue
+    }
+    taken.set(k, { id: r.station_cd, kind: 'other name' })
+    if (!aCity) unmatched.push({ id: r.station_cd, name: r.station_name, prefecture: PREFECTURES[ap], address: r[addrKey] })
+    stations.push({ id: r.station_cd, name: r.station_name, p: ap, city: aCity })
+    aliases.push({ id: r.station_cd, name: r.station_name, prefecture: PREFECTURES[ap], city: aCity ?? null, groupId: gcd, representative })
+  }
+  return { csvName, rowCount: rows.length, activeCount: active.length, groupCount: groups.size, stations, unmatched, multiName, aliases, keptNames, skippedAliases }
 }
 
 function addExtras(stations, cities) {
@@ -271,7 +286,7 @@ const samePref = sameName.filter(([, l]) => new Set(l.map((s) => s.p)).size < l.
 const cityCount = cities.reduce((n, c) => n + c.length, 0)
 console.log(`municipalities: ${cityCount} (excluded ${excluded} Northern Territories villages)`)
 console.log(`station csv: ${built.csvName}`)
-console.log(`stations: rows ${built.rowCount} -> in service ${built.activeCount} -> grouped ${built.groupCount} -> other names +${built.aliases.length} -> with extras ${built.stations.length}`)
+console.log(`stations: rows ${built.rowCount} -> in service ${built.activeCount} -> grouped ${built.groupCount} -> other names +${built.aliases.length} (skipped ${built.skippedAliases.length}: same name in the prefecture) -> with extras ${built.stations.length}`)
 console.log(`extras: added ${extras.filter((x) => x.added).length}, already present ${extras.filter((x) => !x.added).length}`)
 console.log(`no city from address: ${built.unmatched.length}`)
 console.log(`same names: ${sameName.length} (in several prefectures ${crossPref.length}, twice in one prefecture ${samePref.length})`)
@@ -289,6 +304,7 @@ if (reportAt > 0 && process.argv[reportAt + 1]) {
     multiName: built.multiName,
     aliases: built.aliases,
     keptNames: built.keptNames,
+    skippedAliases: built.skippedAliases,
     crossPref: crossPref.map(([n, l]) => ({ name: n, stations: l.map(nameOf) })),
     samePref: samePref.map(([n, l]) => ({ name: n, stations: l.map(nameOf) })),
   }
