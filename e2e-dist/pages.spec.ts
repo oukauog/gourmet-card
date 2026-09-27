@@ -77,3 +77,15 @@ test('the form shows the build version (not 開発版)', async ({ page }) => {
   const box = await v.boundingBox()
   expect(box!.y).toBeGreaterThan(credits!.y + credits!.height - 1)
 })
+
+test('the menu of the list opens "バックアップと取り込み" (construction 8)', async ({ page }) => {
+  const problems = watch(page)
+  await page.goto('./')
+  await expect(page.getByTestId('tile-grid')).toHaveAttribute('aria-busy', 'false')
+  await page.getByRole('button', { name: 'メニュー' }).click()
+  await expect(page).toHaveURL(/\/gourmet-card\/#\/data$/)
+  await expect(page.getByRole('heading', { level: 1, name: 'バックアップと取り込み' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'ファイルから取り込む' })).toBeVisible()
+  await expect(page.getByTestId('last-backup')).toHaveText('まだバックアップしていません')
+  expect(problems).toEqual([])
+})
