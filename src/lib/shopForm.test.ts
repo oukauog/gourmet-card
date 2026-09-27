@@ -13,6 +13,7 @@ const SHOP: Shop = {
   rating: 37,
   prefecture: '富山県',
   city: '富山市',
+  stationId: '1140501',
   areaTagIds: ['a1'],
   genreTagIds: ['g1', 'gone'],
   useTagIds: ['u1'],
@@ -33,6 +34,8 @@ describe('shop form values', () => {
       uses: [],
       areas: [],
       prefecture: '',
+      city: '',
+      stationId: '',
       mapUrl: '',
       memo: '',
     })
@@ -46,13 +49,14 @@ describe('shop form values', () => {
     expect(v.genres).toEqual([{ key: 'ラーメン', name: 'ラーメン', id: 'g1' }])
     expect(v.uses.map((d) => d.id)).toEqual(['u1'])
     expect(v.areas.map((d) => d.id)).toEqual(['a1'])
+    expect([v.city, v.stationId]).toEqual(['富山市', '1140501'])
     expect([v.prefecture, v.mapUrl, v.memo]).toEqual(['富山県', 'https://example.com', 'a\nb'])
   })
 
   it('missing optional strings become empty strings', () => {
-    const { prefecture: _p, mapUrl: _m, memo: _n, ...rest } = SHOP
+    const { prefecture: _p, mapUrl: _m, memo: _n, city: _c, stationId: _s, ...rest } = SHOP
     const v = shopFormFromShop(rest as Shop, TAGS)
-    expect([v.prefecture, v.mapUrl, v.memo]).toEqual(['', '', ''])
+    expect([v.prefecture, v.mapUrl, v.memo, v.city, v.stationId]).toEqual(['', '', '', '', ''])
   })
 
   it('sameShopForm sees every change', () => {
@@ -67,6 +71,10 @@ describe('shop form values', () => {
       { uses: [...base.uses, { key: 'x', name: 'x' }] },
       { areas: [{ key: '八尾', name: '八尾' }] },
       { prefecture: '' },
+      { city: '' },
+      { city: '高岡市' },
+      { stationId: '' },
+      { stationId: 'x09' },
       { mapUrl: '' },
       { memo: 'a\nb\n' },
     ]
@@ -91,5 +99,8 @@ describe('shop form values', () => {
     expect(d.genres).toEqual([{ id: 'g1', name: 'ラーメン' }, { name: '新' }])
     const blank = shopFormToData({ ...emptyShopForm(), name: '店', mapUrl: '   ', memo: ' \n ' })
     expect([blank.mapUrl, blank.memo, blank.rating]).toEqual([undefined, undefined, undefined])
+    expect([blank.city, blank.stationId]).toEqual([undefined, undefined])
+    const place = shopFormToData({ ...emptyShopForm(), name: '店', prefecture: '富山県', city: '富山市', stationId: '1140501' })
+    expect([place.prefecture, place.city, place.stationId]).toEqual(['富山県', '富山市', '1140501'])
   })
 })

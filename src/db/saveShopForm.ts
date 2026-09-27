@@ -31,30 +31,32 @@ async function tagFields(data: ShopFormData) {
 /** New shop: shop + photos (in this order, the first is the cover) + new tags. */
 export async function createShopFromForm(data: ShopFormData, photos: readonly PhotoInput[]): Promise<Shop> {
   return db.transaction('rw', db.shops, db.photos, db.tags, async () => {
-    const { name, status, rating, prefecture, mapUrl, memo } = data
-    return createShopWithPhotos({ name, status, rating, prefecture, mapUrl, memo, ...(await tagFields(data)) }, photos)
+    const { name, status, rating, prefecture, city, stationId, mapUrl, memo } = data
+    return createShopWithPhotos({ name, status, rating, prefecture, city, stationId, mapUrl, memo, ...(await tagFields(data)) }, photos)
   })
 }
 
 /**
  * Edit: new tags -> fields -> removed photos -> added photos -> final order, all at once.
- * `city` is cleared only when the prefecture changed; `stationId` is never touched.
+ * Prefecture, city and station are saved as the form has them (construction 7: the form clears
+ * the city when the prefecture changes).
  */
 export async function saveShopEdit(shopId: string, data: ShopFormData, photos: readonly PhotoSlot[]): Promise<Shop> {
   return db.transaction('rw', db.shops, db.photos, db.tags, async () => {
     const before = await getShop(shopId)
     if (!before) throw new RecordNotFoundError(`shop not found: ${shopId}`)
 
-    const { name, status, rating, prefecture, mapUrl, memo } = data
+    const { name, status, rating, prefecture, city, stationId, mapUrl, memo } = data
     await updateShop(shopId, {
       name,
       status,
       rating,
       prefecture,
+      city,
+      stationId,
       mapUrl,
       memo,
       ...(await tagFields(data)),
-      ...(prefecture !== before.prefecture ? { city: undefined } : {}),
     })
 
     const kept = new Set(photos.flatMap((s) => ('photoId' in s ? [s.photoId] : [])))

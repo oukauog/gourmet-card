@@ -10,6 +10,8 @@ import { getSetting, setSetting } from '../db/settings'
 import { listShops } from '../db/shops'
 import { listTags } from '../db/tags'
 import type { Shop, ShopStatus, SortOrder } from '../db/types'
+import { useStationMaster } from '../hooks/useGeoMaster'
+import { findStation, stationChoiceLabel, stationLabel } from '../lib/geo'
 import {
   emptyFilter,
   filterChipLabels,
@@ -19,6 +21,7 @@ import {
   resultCountText,
   setUnratedOnly,
   type ShopFilter,
+  type StationLookup,
 } from '../lib/shopFilter'
 import '../styles/home.css'
 import '../styles/filter.css'
@@ -144,6 +147,29 @@ export function HomeScreen({ onAdd, onOpenShop }: Props) {
   }
 
   const tagName = useCallback((id: string) => data?.tagNames.get(id), [data])
+  // the station master is read only when a shop of this tab has a station (construction 7);
+  // until it is loaded the panel has no station section
+  const tabHasStation = (data?.rows ?? []).some((r) => r.shop.status === tab && r.shop.stationId !== undefined)
+  const master = useStationMaster(tabHasStation || filter.stationIds.length > 0)
+  const stationMaster = master.state === 'ready' ? master.value : undefined
+  const stations = useMemo<StationLookup | undefined>(() => {
+    if (!stationMaster) return undefined
+    const at = (id: string) => findStation(stationMaster, id)
+    return {
+      name: (id) => {
+        const s = at(id)
+        return s && stationChoiceLabel(stationMaster, s)
+      },
+      prefecture: (id) => at(id)?.prefecture,
+    }
+  }, [stationMaster])
+  const stationShortName = useCallback(
+    (id: string) => {
+      const s = stationMaster && findStation(stationMaster, id)
+      return s && stationLabel(s)
+    },
+    [stationMaster],
+  )
   const view = useMemo(() => {
     const rows = data?.rows ?? []
     const tabRows = rows.filter((r) => r.shop.status === tab)
@@ -158,10 +184,11 @@ export function HomeScreen({ onAdd, onOpenShop }: Props) {
         tabRows.map((r) => r.shop),
         filter,
         tagName,
+        stations,
       ),
     }
-  }, [data, tab, filter, tagName])
-  const labels = filterChipLabels(filter, tagName)
+  }, [data, tab, filter, tagName, stations])
+  const labels = filterChipLabels(filter, tagName, stationShortName)
   const active = isFilterActive(filter)
   const clearFilter = () => changeFilter(emptyFilter())
 

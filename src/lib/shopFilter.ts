@@ -1,11 +1,15 @@
 // List filter (spec 4.1.1, construction 6). Pure: works on shops already read into memory.
-//   prefecture / area / genre: ANY of the chosen ones     use: ALL of the chosen ones
+//   prefecture / city / station / area / genre: ANY of the chosen ones     use: ALL of the chosen ones
+//   (a city is matched together with its prefecture: 東京都府中市 and 広島県府中市 differ)
 //   different kinds: AND      rating: rating >= minRating (unrated shops never match)
 //   unratedOnly: only shops without a rating (never together with minRating)
 import { ratingToText } from './rating'
 
 export interface ShopFilter {
   prefectures: string[]
+  /** cityKey(prefecture, city) values (construction 7). */
+  cities: string[]
+  stationIds: string[]
   areaTagIds: string[]
   genreTagIds: string[]
   useTagIds: string[]
@@ -17,24 +21,43 @@ export interface ShopFilter {
 /** The fields of a shop that the filter looks at. */
 export interface FilterableShop {
   prefecture?: string
+  city?: string
+  stationId?: string
   rating?: number
   areaTagIds: readonly string[]
   genreTagIds: readonly string[]
   useTagIds: readonly string[]
 }
 
-export type FilterListKey = 'prefectures' | 'areaTagIds' | 'genreTagIds' | 'useTagIds'
+export type FilterListKey = 'prefectures' | 'cities' | 'stationIds' | 'areaTagIds' | 'genreTagIds' | 'useTagIds'
+
+/** The keys the "場所" panel clears (in panel order). */
+export const PLACE_LIST_KEYS: readonly FilterListKey[] = ['prefectures', 'cities', 'stationIds', 'areaTagIds']
+
+const CITY_KEY_SEPARATOR = '\t'
+
+/** A city together with its prefecture (a shop without a prefecture gives '' for it). */
+export function cityKey(prefecture: string | undefined, city: string): string {
+  return (prefecture ?? '') + CITY_KEY_SEPARATOR + city
+}
+
+export function parseCityKey(key: string): { prefecture: string; city: string } {
+  const i = key.indexOf(CITY_KEY_SEPARATOR)
+  return i < 0 ? { prefecture: '', city: key } : { prefecture: key.slice(0, i), city: key.slice(i + 1) }
+}
 
 export const MIN_RATING_CHOICES: readonly number[] = [30, 35, 40, 45]
 
 export function emptyFilter(): ShopFilter {
-  return { prefectures: [], areaTagIds: [], genreTagIds: [], useTagIds: [], unratedOnly: false }
+  return { prefectures: [], cities: [], stationIds: [], areaTagIds: [], genreTagIds: [], useTagIds: [], unratedOnly: false }
 }
 
 /** True when any condition is set. */
 export function isFilterActive(f: ShopFilter): boolean {
   return (
     f.prefectures.length > 0 ||
+    f.cities.length > 0 ||
+    f.stationIds.length > 0 ||
     f.areaTagIds.length > 0 ||
     f.genreTagIds.length > 0 ||
     f.useTagIds.length > 0 ||
@@ -45,6 +68,8 @@ export function isFilterActive(f: ShopFilter): boolean {
 
 export function matchesFilter(s: FilterableShop, f: ShopFilter): boolean {
   if (f.prefectures.length > 0 && !(s.prefecture !== undefined && f.prefectures.includes(s.prefecture))) return false
+  if (f.cities.length > 0 && !(s.city !== undefined && f.cities.includes(cityKey(s.prefecture, s.city)))) return false
+  if (f.stationIds.length > 0 && !(s.stationId !== undefined && f.stationIds.includes(s.stationId))) return false
   if (f.areaTagIds.length > 0 && !f.areaTagIds.some((id) => s.areaTagIds.includes(id))) return false
   if (f.genreTagIds.length > 0 && !f.genreTagIds.some((id) => s.genreTagIds.includes(id))) return false
   if (!f.useTagIds.every((id) => s.useTagIds.includes(id))) return false
@@ -89,7 +114,7 @@ export function clearFilterLists(f: ShopFilter, keys: readonly FilterListKey[]):
 // ---------- panel candidates ----------
 
 export interface FilterOption {
-  /** Prefecture name or tag id. */
+  /** Prefecture name, cityKey, station id or tag id. */
   value: string
   name: string
   /** Shops (of the given list) that have it. */
@@ -99,6 +124,9 @@ export interface FilterOption {
 
 export interface FilterOptions {
   prefectures: FilterOption[]
+  cities: FilterOption[]
+  /** Empty while the station master is not given. */
+  stations: FilterOption[]
   areas: FilterOption[]
   genres: FilterOption[]
   uses: FilterOption[]
@@ -106,32 +134,74 @@ export interface FilterOptions {
 
 const jaCollator = new Intl.Collator('ja')
 export const MISSING_TAG_NAME = '（削除されたタグ）'
+export const MISSING_STATION_OPTION_NAME = '（見つからない駅）'
+
+/** What the filter needs from the station master (construction 7). */
+export interface StationLookup {
+  /** Name for the panel (e.g. "府中駅（東京都）"), undefined for an unknown id. */
+  name: (id: string) => string | undefined
+  prefecture: (id: string) => string | undefined
+}
 
 /**
  * Candidates for the panels from `shops` (the shops of the current tab; the filter itself is
  * ignored): values used by at least one shop, with counts, most used first, ties by name.
  * Chosen values stay even with 0 shops (so they can be taken off). Unknown tag ids on shops are
  * skipped; a chosen unknown id is shown as MISSING_TAG_NAME.
+ * Cities and stations (construction 7): while prefectures are chosen, only those of the chosen
+ * prefectures are offered (chosen ones stay). Stations need `stations` (the master); without
+ * it there are none. A city name used in two prefectures of the list gets "（東京都）".
  */
 export function filterOptions(
   shops: readonly FilterableShop[],
   f: ShopFilter,
   tagName: (id: string) => string | undefined,
+  stations?: StationLookup,
 ): FilterOptions {
-  const build = (values: (s: FilterableShop) => readonly string[], chosen: readonly string[], nameOf: (v: string) => string | undefined) => {
+  const build = (
+    values: (s: FilterableShop) => readonly string[],
+    chosen: readonly string[],
+    nameOf: (v: string) => string | undefined,
+    missingName = MISSING_TAG_NAME,
+    offered: (v: string) => boolean = () => true,
+  ) => {
     const counts = new Map<string, number>()
     for (const s of shops) for (const v of new Set(values(s))) counts.set(v, (counts.get(v) ?? 0) + 1)
     for (const v of chosen) if (!counts.has(v)) counts.set(v, 0)
     const out: FilterOption[] = []
     for (const [value, count] of counts) {
       const selected = chosen.includes(value)
-      const name = nameOf(value) ?? (selected ? MISSING_TAG_NAME : undefined)
+      if (!selected && !offered(value)) continue
+      const name = nameOf(value) ?? (selected ? missingName : undefined)
       if (name !== undefined) out.push({ value, name, count, selected })
     }
     return out.sort((a, b) => b.count - a.count || jaCollator.compare(a.name, b.name))
   }
+  const inChosenPrefecture = (p: string | undefined) => f.prefectures.length === 0 || (p !== undefined && f.prefectures.includes(p))
+
+  const cities = build(
+    (s) => (s.city ? [cityKey(s.prefecture, s.city)] : []),
+    f.cities,
+    (v) => parseCityKey(v).city,
+    undefined,
+    (v) => inChosenPrefecture(parseCityKey(v).prefecture),
+  )
+  const cityNameCount = new Map<string, number>()
+  for (const o of cities) cityNameCount.set(o.name, (cityNameCount.get(o.name) ?? 0) + 1)
+  for (const o of cities) {
+    const { prefecture } = parseCityKey(o.value)
+    if ((cityNameCount.get(o.name) ?? 0) > 1 && prefecture) o.name = `${o.name}（${prefecture}）`
+  }
+  cities.sort((a, b) => b.count - a.count || jaCollator.compare(a.name, b.name))
+
   return {
     prefectures: build((s) => (s.prefecture ? [s.prefecture] : []), f.prefectures, (v) => v),
+    cities,
+    stations: stations
+      ? build((s) => (s.stationId ? [s.stationId] : []), f.stationIds, stations.name, MISSING_STATION_OPTION_NAME, (id) =>
+          inChosenPrefecture(stations.prefecture(id)),
+        )
+      : [],
     areas: build((s) => s.areaTagIds, f.areaTagIds, tagName),
     genres: build((s) => s.genreTagIds, f.genreTagIds, tagName),
     uses: build((s) => s.useTagIds, f.useTagIds, tagName),
@@ -154,11 +224,24 @@ export function ratingChipLabel(minRating: number | undefined): string {
   return minRating === undefined ? FILTER_KIND_LABELS.rating : `${ratingToText(minRating)}以上`
 }
 
-/** Text of each chip. "場所" counts prefectures and areas together (prefectures first). */
-export function filterChipLabels(f: ShopFilter, tagName: (id: string) => string | undefined) {
+/**
+ * Text of each chip. "場所" counts prefectures, cities, stations and areas together (in that
+ * order). `stationName` gives the chip name of a station ("富山駅").
+ */
+export function filterChipLabels(
+  f: ShopFilter,
+  tagName: (id: string) => string | undefined,
+  stationName: (id: string) => string | undefined = () => undefined,
+) {
   const names = (ids: readonly string[]) => ids.map((id) => tagName(id) ?? MISSING_TAG_NAME)
+  const place = [
+    ...f.prefectures,
+    ...f.cities.map((k) => parseCityKey(k).city),
+    ...f.stationIds.map((id) => stationName(id) ?? MISSING_STATION_OPTION_NAME),
+    ...names(f.areaTagIds),
+  ]
   return {
-    place: namesLabel(FILTER_KIND_LABELS.place, [...f.prefectures, ...names(f.areaTagIds)]),
+    place: namesLabel(FILTER_KIND_LABELS.place, place),
     genre: namesLabel(FILTER_KIND_LABELS.genre, names(f.genreTagIds)),
     use: namesLabel(FILTER_KIND_LABELS.use, names(f.useTagIds)),
     rating: ratingChipLabel(f.minRating),

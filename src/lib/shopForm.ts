@@ -12,6 +12,10 @@ export interface ShopFormValues {
   areas: TagDraft[]
   /** '' = not chosen. */
   prefecture: string
+  /** Municipality ('' = not chosen). Pairs with the prefecture (spec 3.5). */
+  city: string
+  /** Station id of the master ('' = none). */
+  stationId: string
   mapUrl: string
   memo: string
 }
@@ -22,6 +26,8 @@ export interface ShopFormData {
   status: ShopStatus
   rating: number | undefined
   prefecture: string | undefined
+  city: string | undefined
+  stationId: string | undefined
   mapUrl: string | undefined
   memo: string | undefined
   genres: { id?: string; name: string }[]
@@ -31,7 +37,7 @@ export interface ShopFormData {
 
 /** New shop: "手札" and everything else empty. */
 export function emptyShopForm(): ShopFormValues {
-  return { name: '', status: 'visited', rating: undefined, genres: [], uses: [], areas: [], prefecture: '', mapUrl: '', memo: '' }
+  return { name: '', status: 'visited', rating: undefined, genres: [], uses: [], areas: [], prefecture: '', city: '', stationId: '', mapUrl: '', memo: '' }
 }
 
 /** Current values of a saved shop. Tag ids that no longer exist are skipped. */
@@ -49,6 +55,8 @@ export function shopFormFromShop(shop: Shop, tagById: ReadonlyMap<string, Tag>):
     uses: drafts(shop.useTagIds),
     areas: drafts(shop.areaTagIds),
     prefecture: shop.prefecture ?? '',
+    city: shop.city ?? '',
+    stationId: shop.stationId ?? '',
     mapUrl: shop.mapUrl ?? '',
     memo: shop.memo ?? '',
   }
@@ -66,6 +74,8 @@ export function sameShopForm(a: ShopFormValues, b: ShopFormValues): boolean {
     tagKeys(a.uses) === tagKeys(b.uses) &&
     tagKeys(a.areas) === tagKeys(b.areas) &&
     a.prefecture === b.prefecture &&
+    a.city === b.city &&
+    a.stationId === b.stationId &&
     a.mapUrl === b.mapUrl &&
     a.memo === b.memo
   )
@@ -81,6 +91,8 @@ export function shopFormToData(v: ShopFormValues): ShopFormData {
     status: v.status,
     rating: v.rating,
     prefecture: optional(v.prefecture),
+    city: optional(v.city),
+    stationId: optional(v.stationId),
     mapUrl: optional(v.mapUrl.trim()),
     memo: optional(v.memo),
     genres: tags(v.genres),

@@ -85,6 +85,22 @@ describe('sample data (dev only)', () => {
     expect([s.prefecture, s.city, s.mapUrl, s.memo]).toEqual([f.prefecture, f.city, f.mapUrl, f.memo])
   })
 
+  it('stations that match the city, and shops without a station (construction 7)', async () => {
+    const { loadStationMaster } = await import('../data/geoMaster')
+    const master = await loadStationMaster()
+    await createShopWithPhotos({ name: '元' }, [])
+    await addSampleShops(11)
+    const samples = (await listShops()).filter((s) => s.name.endsWith(SAMPLE_SUFFIX))
+    const withStation = samples.filter((s) => s.stationId !== undefined)
+    expect(withStation.length).toBeGreaterThan(0)
+    expect(samples.some((s) => s.stationId === undefined && s.city !== undefined)).toBe(true)
+    for (const s of withStation) {
+      const st = master.byId.get(s.stationId!)!
+      expect([st.prefecture, st.city]).toEqual([s.prefecture, s.city])
+    }
+    expect(new Set(withStation.map((s) => master.byId.get(s.stationId!)!.name))).toEqual(new Set(['富山', '高岡', '金沢']))
+  })
+
   it('removing the samples also removes the sample tags that no shop uses', async () => {
     await createShopWithPhotos({ name: '元' }, [])
     await addSampleShops()

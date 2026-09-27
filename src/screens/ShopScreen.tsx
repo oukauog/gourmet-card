@@ -9,6 +9,8 @@ import { getPhotosForShop } from '../db/photos'
 import { deleteShop, getShop, updateShop } from '../db/shops'
 import { listTags } from '../db/tags'
 import type { Shop, Tag } from '../db/types'
+import { useStationMaster } from '../hooks/useGeoMaster'
+import { findStation, stationLabel } from '../lib/geo'
 import { formatPlace, isOpenableUrl } from '../lib/shopView'
 import '../styles/shop.css'
 
@@ -117,6 +119,10 @@ export function ShopScreen({ shopId, onBack, onDeleted, onEdit }: Props) {
 function ShopBody({ view, onWent }: { view: ShopView; onWent: () => void }) {
   const { shop, photos, genres, uses, areas } = view
   const place = formatPlace(shop.prefecture, shop.city)
+  // the station master is read only for a shop with a station; an unknown id is not shown
+  const master = useStationMaster(shop.stationId !== undefined)
+  const station = master.state === 'ready' ? findStation(master.value, shop.stationId) : undefined
+  const stationText = station ? stationLabel(station) : ''
   const areaText = areas.map((t) => t.name).join('・')
   const mapUrl = isOpenableUrl(shop.mapUrl) ? shop.mapUrl!.trim() : undefined
   const memo = shop.memo?.trim() ? shop.memo : undefined
@@ -153,11 +159,12 @@ function ShopBody({ view, onWent }: { view: ShopView; onWent: () => void }) {
         </ul>
       )}
 
-      {(place || areaText) && (
+      {(place || stationText || areaText) && (
         <section className="shop-section" aria-label="場所">
           <h2 className="shop-section-title">場所</h2>
           <p className="shop-place">
             {place && <span>{place}</span>}
+            {stationText && <span className="shop-station">{stationText}</span>}
             {areaText && <span className="shop-area">{areaText}</span>}
           </p>
         </section>

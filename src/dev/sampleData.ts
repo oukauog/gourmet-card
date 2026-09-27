@@ -2,6 +2,7 @@
 // Duplicate existing shops so the tile list can be judged with many tiles and with stars,
 // and give the copies tags / place / map URL / memo (no input screen yet: construction 5)
 // so the shop page can be judged. Uses only the public data API.
+import { loadStationMaster } from '../data/geoMaster'
 import { createShopWithPhotos } from '../db/createShopWithPhotos'
 import { getPhotosForShop } from '../db/photos'
 import { deleteShop, listShops } from '../db/shops'
@@ -22,10 +23,11 @@ const SAMPLE_TAGS: { kind: TagKind; names: readonly string[] }[] = [
   { kind: 'area', names: SAMPLE_AREAS },
 ]
 
-const PLACES: { prefecture?: string; city?: string }[] = [
-  { prefecture: '富山県', city: '富山市' },
-  { prefecture: '富山県', city: '高岡市' },
-  { prefecture: '石川県', city: '金沢市' },
+// station: a station NAME of the master (looked up in the same prefecture; construction 7)
+const PLACES: { prefecture?: string; city?: string; station?: string }[] = [
+  { prefecture: '富山県', city: '富山市', station: '富山' },
+  { prefecture: '富山県', city: '高岡市', station: '高岡' },
+  { prefecture: '石川県', city: '金沢市', station: '金沢' },
   { prefecture: '富山県', city: '富山市' },
   {},
 ]
@@ -54,6 +56,7 @@ export function sampleFields(i: number): {
   areas: string[]
   prefecture?: string
   city?: string
+  station?: string
   mapUrl?: string
   memo?: string
 } {
@@ -78,6 +81,9 @@ async function tagIds(kind: TagKind, names: string[]): Promise<string[]> {
 export async function addSampleShops(target = SAMPLE_TARGET): Promise<number> {
   const shops = await listShops()
   const originals = shops.filter((s) => !s.name.endsWith(SAMPLE_SUFFIX))
+  const master = await loadStationMaster()
+  const stationId = (name: string | undefined, prefecture: string | undefined) =>
+    name ? master.stations.find((s) => s.name === name && s.prefecture === prefecture)?.id : undefined
   let count = shops.length
   let added = 0
   for (let i = 0; count < target; i++) {
@@ -98,6 +104,7 @@ export async function addSampleShops(target = SAMPLE_TARGET): Promise<number> {
       rating,
       prefecture: f.prefecture,
       city: f.city,
+      stationId: stationId(f.station, f.prefecture),
       mapUrl: f.mapUrl,
       memo: f.memo,
       genreTagIds: await tagIds('genre', f.genres),

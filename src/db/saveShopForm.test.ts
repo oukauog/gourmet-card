@@ -51,6 +51,11 @@ describe('createShopFromForm', () => {
     for (const k of ['rating', 'prefecture', 'city', 'mapUrl', 'memo', 'stationId']) expect(k in shop).toBe(false)
   })
 
+  it('saves the city and the station (construction 7)', async () => {
+    const shop = await createShopFromForm(data({ prefecture: '富山県', city: '富山市', stationId: '1140501' }), [])
+    expect(await getShop(shop.id)).toMatchObject({ prefecture: '富山県', city: '富山市', stationId: '1140501' })
+  })
+
   it('on failure nothing is saved (no shop, no new tag)', async () => {
     await expect(createShopFromForm(data({ name: '  ', genres: [{ name: '新タグ' }] }), [])).rejects.toBeInstanceOf(ValidationError)
     await expect(createShopFromForm(data({ genres: [{ name: '新タグ' }] }), [photo(1), photo(2), photo(3), photo(4)])).rejects.toBeInstanceOf(
@@ -82,7 +87,7 @@ describe('saveShopEdit', () => {
     const slots: PhotoSlot[] = [{ photoId: p3 }, { photo: photo(9) }, { photoId: p1 }]
     const saved = await saveShopEdit(
       shop.id,
-      data({ name: '新しい名前', rating: 42, prefecture: '富山県', areas: [{ id: area.id, name: '総曲輪' }], memo: 'メモ' }),
+      data({ name: '新しい名前', rating: 42, prefecture: '富山県', city: '富山市', stationId: 'st-1', areas: [{ id: area.id, name: '総曲輪' }], memo: 'メモ' }),
       slots,
     )
     expect(saved.photoIds).toHaveLength(3)
@@ -90,21 +95,38 @@ describe('saveShopEdit', () => {
     expect(saved.photoIds[2]).toBe(p1)
     expect(await smallBytes(shop.id)).toEqual([3, 9, 1])
     expect([saved.name, saved.rating, saved.memo]).toEqual(['新しい名前', 42, 'メモ'])
-    // same prefecture: city and station untouched
+    // the form's city and station are kept as they were
     expect([saved.city, saved.stationId]).toEqual(['富山市', 'st-1'])
   })
 
-  it('changing the prefecture clears the city; the station is never touched', async () => {
+  it('saves prefecture, city and station as the form has them (the form clears the city, construction 7)', async () => {
     const { shop } = await seedShop()
     const keep: PhotoSlot[] = shop.photoIds.map((photoId) => ({ photoId }))
-    const s1 = await saveShopEdit(shop.id, data({ prefecture: '石川県' }), keep)
+    // the form changed the prefecture (and so cleared the city); the station stays
+    const s1 = await saveShopEdit(shop.id, data({ prefecture: '石川県', city: undefined, stationId: 'st-1' }), keep)
     expect(s1.prefecture).toBe('石川県')
     expect('city' in s1).toBe(false)
     expect(s1.stationId).toBe('st-1')
     await updateShop(shop.id, { city: '金沢市' })
-    const s2 = await saveShopEdit(shop.id, data({ prefecture: undefined }), keep)
+    const s2 = await saveShopEdit(shop.id, data({ prefecture: undefined, stationId: 'st-1' }), keep)
     expect('prefecture' in s2 || 'city' in s2).toBe(false)
     expect(s2.stationId).toBe('st-1')
+  })
+
+  it('the city alone can change (same prefecture); the station can be changed or removed', async () => {
+    const { shop } = await seedShop()
+    const keep: PhotoSlot[] = shop.photoIds.map((photoId) => ({ photoId }))
+    const s1 = await saveShopEdit(shop.id, data({ prefecture: '富山県', city: '高岡市', stationId: 'x09' }), keep)
+    expect([s1.prefecture, s1.city, s1.stationId]).toEqual(['富山県', '高岡市', 'x09'])
+    const s2 = await saveShopEdit(shop.id, data({ prefecture: '富山県', city: '高岡市', stationId: undefined }), keep)
+    expect([s2.city, 'stationId' in s2]).toEqual(['高岡市', false])
+  })
+
+  it('a new prefecture with a new city is saved as given (not cleared)', async () => {
+    const { shop } = await seedShop()
+    const keep: PhotoSlot[] = shop.photoIds.map((photoId) => ({ photoId }))
+    const s = await saveShopEdit(shop.id, data({ prefecture: '石川県', city: '金沢市', stationId: 'st-1' }), keep)
+    expect([s.prefecture, s.city, s.stationId]).toEqual(['石川県', '金沢市', 'st-1'])
   })
 
   it('creates new tags only when saving, reuses existing ones', async () => {

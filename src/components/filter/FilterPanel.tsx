@@ -3,6 +3,7 @@ import { ratingToText } from '../../lib/rating'
 import {
   clearFilterLists,
   MIN_RATING_CHOICES,
+  PLACE_LIST_KEYS,
   setMinRating,
   toggleFilterValue,
   type FilterListKey,
@@ -23,14 +24,13 @@ interface Section {
   options: FilterOption[]
 }
 
-/**
- * Sections of each list panel. "場所" = prefecture + area; city / station sections come in
- * construction 7 (add them here).
- */
+/** Sections of each list panel. "場所" = prefecture, city, station, area (construction 7). */
 function sectionsOf(kind: 'place' | 'genre' | 'use', o: FilterOptions): Section[] {
   const all: Record<typeof kind, Section[]> = {
     place: [
       { title: '県', key: 'prefectures', options: o.prefectures },
+      { title: '市', key: 'cities', options: o.cities },
+      { title: '駅', key: 'stationIds', options: o.stations },
       { title: 'エリア', key: 'areaTagIds', options: o.areas },
     ],
     genre: [{ key: 'genreTagIds', options: o.genres }],
@@ -111,7 +111,7 @@ export function FilterPanel({ kind, filter, options, shownCount, sort, onFilterC
   }
 
   const sections = sectionsOf(kind, options)
-  const keys = kind === 'place' ? (['prefectures', 'areaTagIds'] as const) : kind === 'genre' ? (['genreTagIds'] as const) : (['useTagIds'] as const)
+  const keys: readonly FilterListKey[] = kind === 'place' ? PLACE_LIST_KEYS : kind === 'genre' ? ['genreTagIds'] : ['useTagIds']
   const anyChosen = keys.some((k) => filter[k].length > 0)
   const clear = (
     <button type="button" className="sheet-clear" disabled={!anyChosen} onClick={() => onFilterChange(clearFilterLists(filter, keys))}>

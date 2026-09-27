@@ -1,0 +1,77 @@
+/* 最寄り駅 / 市 / attribution in the form (construction 7). Base: form.css, app.css. */
+
+.station-input {
+  scroll-margin-top: 12px;
+}
+.station-list {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--c-line);
+  border-radius: 10px;
+  background: #fff;
+}
+.station-candidate {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-height: 46px;
+  padding: 0 14px;
+  border: 0;
+  border-top: 1px solid var(--c-line);
+  background: none;
+  color: var(--c-text);
+  font: inherit;
+  font-size: 16px;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.station-candidate:first-child {
+  border-top: 0;
+}
+.station-candidate:active {
+  background: var(--c-bg-soft);
+}
+.station-candidate-name {
+  font-weight: 600;
+}
+.station-candidate-place {
+  margin-left: auto;
+  color: var(--c-sub);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.station-none {
+  color: var(--c-sub);
+}
+.station-chosen {
+  display: flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 2px;
+  min-height: 44px;
+  padding: 0 4px 0 14px;
+  border-radius: 999px;
+  background: var(--c-bg-soft);
+  font-size: 16px;
+  font-weight: 600;
+}
+.form-select:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.geo-credits {
+  margin: 8px 0 0;
+  color: #9a9590;
+  font-size: 11px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.geo-credits p {
+  margin: 0;
+}
+.geo-credits a {
+  color: inherit;
+}

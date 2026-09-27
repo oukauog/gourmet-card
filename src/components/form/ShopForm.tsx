@@ -2,10 +2,11 @@ import { useState } from 'react'
 import type { PhotoSlot } from '../../db/saveShopForm'
 import type { ShopStatus } from '../../db/types'
 import { usePhotoDrafts, type PhotoDraft, type SavedPhoto } from '../../hooks/usePhotoDrafts'
-import { PREFECTURES } from '../../lib/prefectures'
 import { sameShopForm, type ShopFormValues } from '../../lib/shopForm'
 import { isOpenableUrl } from '../../lib/shopView'
 import { PhotoPicker } from '../PhotoPicker'
+import { GeoCredits } from './GeoCredits'
+import { PlaceFields } from './PlaceFields'
 import { RatingInput } from './RatingInput'
 import { TagInput } from './TagInput'
 import { UseTagPicker } from './UseTagPicker'
@@ -32,9 +33,10 @@ const STATUSES: { value: ShopStatus; label: string }[] = [
 const photoKeys = (ds: readonly PhotoDraft[]) => ds.map((d) => d.key).join('\n')
 
 /**
- * The one form for register and edit (spec 4.2.1). Order: photos, name, 手札/行きたい, rating,
- * genre, use, prefecture, area, map URL, memo. Only the name is required. Nothing is written
- * to the DB before "保存" (new tags and photo changes included).
+ * The one form for register and edit (spec 4.2.1 / 4.2.2). Order: photos, name, 手札/行きたい,
+ * rating, genre, use, station, prefecture, city, area, map URL, memo (then the data credits).
+ * Only the name is required. Nothing is written to the DB before "保存" (new tags and photo
+ * changes included).
  */
 export function ShopForm({ title, initialValues, initialPhotos = [], confirmDiscard, onCancel, onSubmit }: Props) {
   const photos = usePhotoDrafts(initialPhotos)
@@ -49,8 +51,6 @@ export function ShopForm({ title, initialValues, initialPhotos = [], confirmDisc
   const dirty = !sameShopForm(initial.values, v) || photoKeys(photos.drafts) !== initial.photos
   const canSave = v.name.trim() !== '' && !photos.isProcessing && !saving
   const urlWarning = v.mapUrl.trim() !== '' && !isOpenableUrl(v.mapUrl)
-  // keep a value that is not in the list (e.g. from an import) selectable
-  const prefectures = v.prefecture && !PREFECTURES.includes(v.prefecture) ? [v.prefecture, ...PREFECTURES] : PREFECTURES
 
   const cancel = () => {
     if (confirmDiscard && dirty && !window.confirm('変更を破棄しますか？')) return
@@ -147,19 +147,10 @@ export function ShopForm({ title, initialValues, initialPhotos = [], confirmDisc
 
         <UseTagPicker value={v.uses} onChange={(t) => set('uses', t)} />
 
-        <div className="form-field">
-          <label className="form-label" htmlFor="form-prefecture">
-            県
-          </label>
-          <select id="form-prefecture" className="text-input form-select" value={v.prefecture} onChange={(e) => set('prefecture', e.target.value)}>
-            <option value="">未選択</option>
-            {prefectures.map((p) => (
-              <option key={p} value={p}>
-                {p}
-              </option>
-            ))}
-          </select>
-        </div>
+        <PlaceFields
+          value={{ prefecture: v.prefecture, city: v.city, stationId: v.stationId }}
+          onChange={(place) => setV((cur) => ({ ...cur, ...place }))}
+        />
 
         <TagInput kind="area" label="エリア" placeholder="例: 総曲輪" value={v.areas} onChange={(t) => set('areas', t)} />
 
@@ -188,6 +179,8 @@ export function ShopForm({ title, initialValues, initialPhotos = [], confirmDisc
           </label>
           <textarea id="form-memo" className="text-input form-memo" rows={4} value={v.memo} onChange={(e) => set('memo', e.target.value)} />
         </div>
+
+        <GeoCredits />
 
         {error && (
           <div role="alert">

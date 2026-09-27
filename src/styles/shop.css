@@ -104,8 +104,9 @@
 }
 .shop-place {
   display: flex;
-  flex-wrap: wrap;
-  gap: 2px 12px;
+  /* top to bottom: prefecture + city, station, area (construction 7) */
+  flex-direction: column;
+  gap: 2px;
   margin: 0;
   font-size: 15px;
 }
