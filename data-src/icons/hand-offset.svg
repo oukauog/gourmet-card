@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512">
-  <!-- Hand of cards, fan: sushi, yakiniku, ramen (front). Full bleed, no corner radius, no text; inside the centre 80% circle. -->
+  <!-- Hand of cards, offset: sushi, yakiniku, ramen (front). Full bleed, no corner radius, no text; inside the centre 80% circle. -->
   <rect width="512" height="512" fill="#d9480f"/>
   <defs>
     <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
@@ -42,19 +42,19 @@
       </g>
     </g>
   </defs>
-  <g transform="rotate(-21 256 440) translate(256 266) scale(1.05)">
+  <g transform="translate(172 244) rotate(-8) scale(0.93)">
       <g filter="url(#shadow)">
         <rect x="-85" y="-115" width="170" height="230" rx="20" fill="#ffffff"/>
       </g>
       <use href="#sushi" transform="translate(0 22) scale(1.22)"/>
   </g>
-  <g transform="rotate(0 256 440) translate(256 266) scale(1.05)">
+  <g transform="translate(256 258) rotate(-8) scale(0.93)">
       <g filter="url(#shadow)">
         <rect x="-85" y="-115" width="170" height="230" rx="20" fill="#ffffff"/>
       </g>
       <use href="#yakiniku" transform="translate(0 22) scale(1.22)"/>
   </g>
-  <g transform="rotate(21 256 440) translate(256 266) scale(1.05)">
+  <g transform="translate(340 272) rotate(-8) scale(0.93)">
       <g filter="url(#shadow)">
         <rect x="-85" y="-115" width="170" height="230" rx="20" fill="#ffffff"/>
       </g>

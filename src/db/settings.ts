@@ -1,6 +1,6 @@
 import { db } from './db'
 import { ValidationError } from './errors'
-import { SORT_ORDERS, type SettingKey, type SettingsMap, type SortOrder } from './types'
+import { PERSIST_RESULTS, SORT_ORDERS, type PersistResult, type SettingKey, type SettingsMap, type SortOrder } from './types'
 
 const VALIDATORS: { [K in SettingKey]: (v: unknown) => v is SettingsMap[K] } = {
   lastBackupAt: (v): v is string => typeof v === 'string' && !Number.isNaN(Date.parse(v)),
@@ -10,6 +10,8 @@ const VALIDATORS: { [K in SettingKey]: (v: unknown) => v is SettingsMap[K] } = {
   firstShopAt: (v): v is string => typeof v === 'string' && !Number.isNaN(Date.parse(v)),
   backupReminderDismissedAt: (v): v is string => typeof v === 'string' && !Number.isNaN(Date.parse(v)),
   installGuideDismissedAt: (v): v is string => typeof v === 'string' && !Number.isNaN(Date.parse(v)),
+  persistRequestedAt: (v): v is string => typeof v === 'string' && !Number.isNaN(Date.parse(v)),
+  persistResult: (v): v is PersistResult => PERSIST_RESULTS.includes(v as PersistResult),
 }
 
 /** Stored value of the setting, or undefined if never set. */

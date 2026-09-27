@@ -7,11 +7,14 @@ export type ShopStatus = 'visited' | 'wishlist'
 export type ShopOrigin = 'self' | 'shared'
 export type TagKind = 'area' | 'genre' | 'use'
 export type SortOrder = 'newest' | 'rating' | 'name'
+/** What navigator.storage.persist() gave (construction 9a). */
+export type PersistResult = 'granted' | 'denied' | 'error'
 
 export const SHOP_STATUSES: readonly ShopStatus[] = ['visited', 'wishlist']
 export const SHOP_ORIGINS: readonly ShopOrigin[] = ['self', 'shared']
 export const TAG_KINDS: readonly TagKind[] = ['area', 'genre', 'use']
 export const SORT_ORDERS: readonly SortOrder[] = ['newest', 'rating', 'name']
+export const PERSIST_RESULTS: readonly PersistResult[] = ['granted', 'denied', 'error']
 
 export const MAX_PHOTOS_PER_SHOP = 3
 
@@ -73,6 +76,10 @@ export interface SettingsMap {
   backupReminderDismissedAt: IsoDateString
   /** When × was tapped on the "add to home screen" guide (never shown again; construction 9). */
   installGuideDismissedAt: IsoDateString
+  /** When navigator.storage.persist() was last called (construction 9a). */
+  persistRequestedAt: IsoDateString
+  /** What that call gave (construction 9a). */
+  persistResult: PersistResult
 }
 
 export type SettingKey = keyof SettingsMap

@@ -1,4 +1,10 @@
 /* Data screen additions (construction 9): storage section, version at the bottom. */
+/* "最後に保護を求めた日時：…" (construction 9a) */
+.data-record {
+  margin: -6px 0 0;
+  color: var(--c-sub);
+  font-size: 12px;
+}
 .data-subtitle {
   margin: 8px 0 0;
   font-size: 15px;

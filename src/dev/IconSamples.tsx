@@ -1,21 +1,19 @@
-// DEV ONLY (construction 9; removed in 9a): the three icon designs as they would look on an
-// iPhone home screen (about 60px, rounded corners, the name below), on a light and a dark
-// wallpaper next to other "apps", then at 180px. Loaded lazily and only in dev.
-import iconA from '../../data-src/icons/icon-a.svg?raw'
-import iconB from '../../data-src/icons/icon-b.svg?raw'
-import iconC from '../../data-src/icons/icon-c.svg?raw'
+// DEV ONLY (construction 9 / 9a; removed in construction 10): the "hand of cards" icons (fan and
+// offset) as they would look on an iPhone home screen (about 60px, rounded corners, the name
+// below), on a light and a dark wallpaper next to other "apps", then at 180px. Lazy, dev only.
+import handFan from '../../data-src/icons/hand-fan.svg?raw'
+import handOffset from '../../data-src/icons/hand-offset.svg?raw'
 import './iconSamples.css'
 
 const DESIGNS = [
-  { key: 'A', label: '案A カード＋箸', svg: iconA },
-  { key: 'B', label: '案B カード＋☆', svg: iconB },
-  { key: 'C', label: '案C 写真タイル', svg: iconC },
+  { key: 'fan', label: '扇形', svg: handFan },
+  { key: 'offset', label: 'ずらし', svg: handOffset },
 ]
 const OTHERS = ['#34c759', '#0a84ff', '#ff9f0a', '#5e5ce6', '#ff375f', '#64d2ff', '#30d158', '#bf5af2', '#ffd60a']
 const url = (svg: string) => `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
 
 function Wallpaper({ dark }: { dark: boolean }) {
-  // 4 columns like a home screen: our 3 designs + other apps around them
+  // 4 columns like a home screen: our 2 designs + other apps around them
   const cells = [
     { other: 0 },
     { design: 0 },
@@ -28,7 +26,7 @@ function Wallpaper({ dark }: { dark: boolean }) {
     { other: 6 },
     { other: 7 },
     { other: 8 },
-    { design: 2 },
+    { other: 0 },
   ]
   return (
     <div className={`icon-wall ${dark ? 'icon-wall-dark' : 'icon-wall-light'}`}>
@@ -50,7 +48,7 @@ export function IconSamples() {
   return (
     <section className="icon-samples" aria-label="アイコンの見本">
       <h2 className="icon-samples-title">アイコンの見本（開発用）</h2>
-      <p className="icon-samples-note">左上から 案A・案B・案C（ホーム画面の実寸 約60px）</p>
+      <p className="icon-samples-note">上の段が扇形、2段目がずらし（ホーム画面の実寸 約60px）</p>
       <Wallpaper dark={false} />
       <Wallpaper dark />
       <div className="icon-large-row">

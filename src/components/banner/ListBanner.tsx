@@ -3,6 +3,7 @@ import { getSetting, setSetting } from '../../db/settings'
 import { backupReminder, backupReminderText, deviceKind, pickBanner, showInstallGuide, type DeviceKind } from '../../lib/banners'
 import { isStandalone } from '../../lib/homeScreenGuide'
 import { nowIso } from '../../lib/time'
+import { requestPersistOncePerRun } from '../../pwa/persist'
 import { applyUpdate, useUpdateAvailable } from '../../pwa/updateStore'
 import { InstallGuideSheet } from './InstallGuideSheet'
 import { UpdateBar } from './UpdateBar'
@@ -46,6 +47,11 @@ export function ListBanner({ shopCount, ready, selecting, onOpenData }: Props) {
       active = false
     }
   }, [])
+
+  // construction 9a: ask to keep the data when the list shows a shop (once per run with the start)
+  useEffect(() => {
+    if (ready) void requestPersistOncePerRun(shopCount)
+  }, [ready, shopCount])
 
   // the first time this device shows a shop in the list: the base date of the reminder (only
   // stored; "now" gives 0 days, so it changes nothing on screen until the next visit)

@@ -1,6 +1,6 @@
-// App icons from data-src/icons/icon-<a|b|c>.svg (construction 9, spec 4.6).
-//   npm run icons          -> design A (default)
-//   npm run icons -- B     -> design B (or C)
+// App icons from data-src/icons/hand-<fan|offset>.svg (construction 9 / 9a, spec 4.6).
+//   npm run icons             -> the fan (default)
+//   npm run icons -- offset   -> the offset cards
 // Renders the SVG with Playwright's Chromium (already a devDependency; nothing new is added) and
 // writes public/apple-touch-icon.png (180), pwa-192.png, pwa-512.png, pwa-maskable-512.png and
 // public/favicon.svg. The SVGs are full bleed (no corner radius, no transparency; iPhone rounds
@@ -12,12 +12,12 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
-const design = (process.argv[2] ?? 'A').toUpperCase()
-if (!['A', 'B', 'C'].includes(design)) {
-  console.error('ERROR: design must be A, B or C')
+const design = (process.argv[2] ?? 'fan').toLowerCase()
+if (!['fan', 'offset'].includes(design)) {
+  console.error('ERROR: design must be fan or offset')
   process.exit(1)
 }
-const svgPath = path.join(root, 'data-src', 'icons', `icon-${design.toLowerCase()}.svg`)
+const svgPath = path.join(root, 'data-src', 'icons', `hand-${design}.svg`)
 const svg = fs.readFileSync(svgPath, 'utf8')
 const out = path.join(root, 'public')
 
