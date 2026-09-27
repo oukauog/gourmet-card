@@ -193,15 +193,17 @@ function buildStations(cities) {
     for (const r of others.values()) pending.push({ r, gcd, representative: rep.station_name })
   }
 
-  // Construction 7b: an other name is NOT added when its prefecture already has a station of the
-  // same name (by nameKey) - a representative, or another other name with a smaller station_cd.
-  const placeKey = (p, name) => `${p}\t${nameKey(name)}`
-  const taken = new Map(stations.map((s) => [placeKey(s.p, s.name), { id: s.id, kind: 'representative' }]))
+  // Construction 7b / 7c: an other name is NOT added when the same prefecture AND city already
+  // has a station of the same name (by nameKey) - a representative, or another other name with a
+  // smaller station_cd. (7b compared the prefecture only; 7c adds the city: 高井田 of 東大阪市 and
+  // 高井田 of 柏原市 are different stations.)
+  const placeKey = (p, city, name) => `${p}\t${city ?? ''}\t${nameKey(name)}`
+  const taken = new Map(stations.map((s) => [placeKey(s.p, s.city, s.name), { id: s.id, kind: 'representative' }]))
   for (const { r, gcd, representative } of pending.sort((a, b) => byNumber(a.r.station_cd, b.r.station_cd))) {
     const ap = Number(r.pref_cd) - 1
     if (!(ap >= 0 && ap < PREFECTURES.length)) fail(`station ${r.station_cd}: pref_cd out of range`)
     const aCity = cityOfAddress(PREFECTURES[ap], r[addrKey], cities[ap])
-    const k = placeKey(ap, r.station_name)
+    const k = placeKey(ap, aCity, r.station_name)
     const existing = taken.get(k)
     if (existing) {
       skippedAliases.push({ id: r.station_cd, name: r.station_name, prefecture: PREFECTURES[ap], city: aCity ?? null, groupId: gcd, representative, existingId: existing.id, existingKind: existing.kind })
@@ -286,7 +288,7 @@ const samePref = sameName.filter(([, l]) => new Set(l.map((s) => s.p)).size < l.
 const cityCount = cities.reduce((n, c) => n + c.length, 0)
 console.log(`municipalities: ${cityCount} (excluded ${excluded} Northern Territories villages)`)
 console.log(`station csv: ${built.csvName}`)
-console.log(`stations: rows ${built.rowCount} -> in service ${built.activeCount} -> grouped ${built.groupCount} -> other names +${built.aliases.length} (skipped ${built.skippedAliases.length}: same name in the prefecture) -> with extras ${built.stations.length}`)
+console.log(`stations: rows ${built.rowCount} -> in service ${built.activeCount} -> grouped ${built.groupCount} -> other names +${built.aliases.length} (skipped ${built.skippedAliases.length}: same name in the same city) -> with extras ${built.stations.length}`)
 console.log(`extras: added ${extras.filter((x) => x.added).length}, already present ${extras.filter((x) => !x.added).length}`)
 console.log(`no city from address: ${built.unmatched.length}`)
 console.log(`same names: ${sameName.length} (in several prefectures ${crossPref.length}, twice in one prefecture ${samePref.length})`)

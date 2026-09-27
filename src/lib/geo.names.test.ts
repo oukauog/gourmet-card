@@ -20,40 +20,50 @@ describe('regression: every station of construction 7 is unchanged', () => {
     expect(changed).toEqual([])
   })
 
-  it('only additions: 197 stations of other names (construction 7b: 200 - 3), ids never reused', () => {
+  it('only additions: 198 stations of other names (construction 7c: 200 - 2), ids never reused', () => {
     const old = new Set(BEFORE.map(([id]) => id))
     const added = M.stations.filter((s) => !old.has(s.id))
-    expect(added).toHaveLength(197)
+    expect(added).toHaveLength(198)
     expect(added.every((s) => /^\d+$/.test(s.id))).toBe(true)
-    expect(M.stations).toHaveLength(8980)
+    expect(M.stations).toHaveLength(8981)
     expect(new Set(M.stations.map((s) => s.id)).size).toBe(M.stations.length)
   })
 })
 
-describe('construction 7b: other names with the same name in the prefecture are not added', () => {
+describe('construction 7b / 7c: other names with the same name in the same prefecture and city are not added', () => {
   const ADDED_07A = added07a as unknown as [string, string, string, string | null][]
-  const REMOVED = ['9921410', '3500103', '9962113'] // 仙台 (あおば通), 野田 (海老江), 高井田 (高井田中央)
+  const REMOVED = ['9921410', '3500103'] // 仙台 (あおば通), 野田 (海老江)
+  const RESTORED = '9962113' // 高井田 (高井田中央; 東大阪市): removed in 7b, back in 7c
 
-  it('the other 197 stations added in 7a keep id, name, prefecture and city; exactly 3 are gone', () => {
+  it('the other 198 stations added in 7a keep id, name, prefecture and city (高井田 included); exactly 2 are gone', () => {
     expect(ADDED_07A).toHaveLength(200)
     const kept = ADDED_07A.filter(([id]) => !REMOVED.includes(id))
-    expect(kept).toHaveLength(197)
+    expect(kept).toHaveLength(198)
+    expect(kept.some(([id]) => id === RESTORED)).toBe(true)
     const changed = kept.filter(([id, name, prefecture, city]) => {
       const s = M.byId.get(id)
       return !s || s.name !== name || s.prefecture !== prefecture || (s.city ?? null) !== city
     })
     expect(changed).toEqual([])
-    expect(REMOVED.map((id) => M.byId.get(id))).toEqual([undefined, undefined, undefined])
-    expect(ADDED_07A.filter(([id]) => REMOVED.includes(id)).map(([, n]) => n).sort()).toEqual(['仙台', '野田', '高井田'].sort())
+    expect(REMOVED.map((id) => M.byId.get(id))).toEqual([undefined, undefined])
+    expect(ADDED_07A.filter(([id]) => REMOVED.includes(id)).map(([, n]) => n).sort()).toEqual(['仙台', '野田'].sort())
+    // 高井田 is back with the very values of construction 7a
+    const [, name, prefecture, city] = ADDED_07A.find(([id]) => id === RESTORED)!
+    expect(M.byId.get(RESTORED)).toEqual({ id: RESTORED, name, prefecture, city })
+    expect([name, prefecture, city]).toEqual(['高井田', '大阪府', '東大阪市'])
   })
 
-  it('仙台 / 野田 / 高井田: one station per prefecture (the representatives stay)', () => {
+  it('仙台 / 野田: one station in the city (the representatives stay); 高井田: 東大阪市 and 柏原市', () => {
     const sendai = suggestStations(M, '仙台').filter((s) => s.name === '仙台' && s.prefecture === '宮城県')
     expect(sendai.map((s) => [s.id, s.city])).toEqual([['1123143', '仙台市']])
     expect(named('野田').filter((s) => s.prefecture === '大阪府').map((s) => [s.id, s.city])).toEqual([['1162308', '大阪市']])
-    // the representative 高井田 (JR) is in 柏原市; the removed 高井田 (Osaka Metro, 東大阪市) sits
-    // next to 高井田中央, the representative of its group
-    expect(named('高井田').filter((s) => s.prefecture === '大阪府').map((s) => [s.id, s.city])).toEqual([['1160711', '柏原市']])
+    // 高井田: the JR one (柏原市) and the Osaka Metro one (東大阪市) are different places (7c)
+    expect(named('高井田').filter((s) => s.prefecture === '大阪府').map((s) => [s.id, s.city])).toEqual([
+      ['1160711', '柏原市'],
+      ['9962113', '東大阪市'],
+    ])
+    const takaida = suggestStations(M, '高井田').filter((s) => s.name === '高井田')
+    expect(takaida.map((s) => stationChoiceLabel(M, s)).sort()).toEqual(['高井田駅（東大阪市）', '高井田駅（柏原市）'].sort())
     expect(named('高井田中央').map((s) => s.city)).toEqual(['東大阪市'])
   })
 })
