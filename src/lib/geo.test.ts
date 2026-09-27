@@ -161,7 +161,11 @@ describe('station names', () => {
     expect(stationLabel({ name: '富山' })).toBe('富山駅')
     expect(stationLabel({ name: '富山駅' })).toBe('富山駅')
     expect(stationLabel({ name: '東京ディズニーランド・ステーション' })).toBe('東京ディズニーランド・ステーション')
-    expect(stationLabel({ name: '駅前' })).toBe('駅前駅')
+    // construction 7a: names ending with 駅前 get no 駅 either (王子駅前, 南富山駅前)
+    expect(stationLabel({ name: '駅前' })).toBe('駅前')
+    expect(stationLabel({ name: '王子駅前' })).toBe('王子駅前')
+    expect(stationLabel({ name: '南富山駅前' })).toBe('南富山駅前')
+    expect(stationLabel({ name: '駅前通' })).toBe('駅前通駅')
   })
 
   it('choice label: prefecture only when another prefecture has the name, city when the same one does', () => {

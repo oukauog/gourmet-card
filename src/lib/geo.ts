@@ -117,9 +117,9 @@ export function suggestStations(master: StationMaster, input: string, prefecture
   return hits.slice(0, limit).map((h) => h.s)
 }
 
-/** "富山駅". Names that already end with 駅 / ステーション are kept as they are. */
+/** "富山駅". Names that already end with 駅 / 駅前 / ステーション are kept as they are (駅前: construction 7a). */
 export function stationLabel(s: Pick<Station, 'name'>): string {
-  return /(駅|ステーション)$/.test(s.name) ? s.name : `${s.name}駅`
+  return /(駅|駅前|ステーション)$/.test(s.name) ? s.name : `${s.name}駅`
 }
 
 /**

@@ -115,6 +115,20 @@ function cityOfAddress(prefName, address, prefCities) {
 
 const byNumber = (a, b) => Number(a) - Number(b)
 
+/**
+ * For "is this another name?" only (construction 7a): NFKC, no white space, ヶ = ケ, 〈〉 = (),
+ * no trailing 駅. 押上（スカイツリー前）/ 押上〈スカイツリー前〉 and 富山駅 / 富山 are the same.
+ */
+function nameKey(name) {
+  return name
+    .normalize('NFKC')
+    .replace(/\s+/g, '')
+    .replace(/ヶ/g, 'ケ')
+    .replace(/[〈\u2329]/g, '(')
+    .replace(/[〉\u232a]/g, ')')
+    .replace(/駅$/, '')
+}
+
 function buildStations(cities) {
   const csvs = fs.existsSync(path.join(SRC, 'ekidata'))
     ? fs.readdirSync(path.join(SRC, 'ekidata')).filter((f) => /^station.*\.csv$/i.test(f))
@@ -142,6 +156,8 @@ function buildStations(cities) {
   const unmatched = []
   const multiName = []
   const stations = []
+  const aliases = []
+  const keptNames = []
   for (const [gcd, list] of [...groups].sort((a, b) => byNumber(a[0], b[0]))) {
     list.sort(order)
     // The row of the group code itself (the representative station) when it is in service;
@@ -155,8 +171,33 @@ function buildStations(cities) {
     const names = [...new Set(list.map((r) => r.station_name))]
     if (names.length > 1) multiName.push({ id: gcd, chosen: rep.station_name, names })
     stations.push({ id: gcd, name: rep.station_name, p, city })
+
+    // Construction 7a: a group also holds nearby stations of other names (御茶ノ水 + 淡路町 +
+    // 小川町 ...). Each other name becomes its own station; the representative is unchanged.
+    // id = the smallest station_cd of that name (station codes and group codes share one
+    // numbering; checked for clashes below).
+    const repKey = nameKey(rep.station_name)
+    const others = new Map()
+    for (const r of list) {
+      const k = nameKey(r.station_name)
+      if (k === repKey) {
+        if (r.station_name !== rep.station_name && !keptNames.some((x) => x.name === r.station_name && x.id === gcd))
+          keptNames.push({ id: gcd, name: r.station_name, representative: rep.station_name })
+        continue
+      }
+      const cur = others.get(k)
+      if (!cur || byNumber(r.station_cd, cur.station_cd) < 0) others.set(k, r)
+    }
+    for (const r of [...others.values()].sort((a, b) => byNumber(a.station_cd, b.station_cd))) {
+      const ap = Number(r.pref_cd) - 1
+      if (!(ap >= 0 && ap < PREFECTURES.length)) fail(`station ${r.station_cd}: pref_cd out of range`)
+      const aCity = cityOfAddress(PREFECTURES[ap], r[addrKey], cities[ap])
+      if (!aCity) unmatched.push({ id: r.station_cd, name: r.station_name, prefecture: PREFECTURES[ap], address: r[addrKey] })
+      stations.push({ id: r.station_cd, name: r.station_name, p: ap, city: aCity })
+      aliases.push({ id: r.station_cd, name: r.station_name, prefecture: PREFECTURES[ap], city: aCity ?? null, groupId: gcd, representative: rep.station_name })
+    }
   }
-  return { csvName, rowCount: rows.length, activeCount: active.length, groupCount: groups.size, stations, unmatched, multiName }
+  return { csvName, rowCount: rows.length, activeCount: active.length, groupCount: groups.size, stations, unmatched, multiName, aliases, keptNames }
 }
 
 function addExtras(stations, cities) {
@@ -198,6 +239,13 @@ const idOrder = (a, b) => {
 const { cities, excluded } = await buildCities()
 const built = buildStations(cities)
 const extras = addExtras(built.stations, cities)
+{
+  const seen = new Set()
+  for (const s of built.stations) {
+    if (seen.has(s.id)) fail(`duplicate station id ${s.id}`)
+    seen.add(s.id)
+  }
+}
 
 const perPref = PREFECTURES.map(() => [])
 for (const s of built.stations) perPref[s.p].push(s)
@@ -223,7 +271,7 @@ const samePref = sameName.filter(([, l]) => new Set(l.map((s) => s.p)).size < l.
 const cityCount = cities.reduce((n, c) => n + c.length, 0)
 console.log(`municipalities: ${cityCount} (excluded ${excluded} Northern Territories villages)`)
 console.log(`station csv: ${built.csvName}`)
-console.log(`stations: rows ${built.rowCount} -> in service ${built.activeCount} -> grouped ${built.groupCount} -> with extras ${built.stations.length}`)
+console.log(`stations: rows ${built.rowCount} -> in service ${built.activeCount} -> grouped ${built.groupCount} -> other names +${built.aliases.length} -> with extras ${built.stations.length}`)
 console.log(`extras: added ${extras.filter((x) => x.added).length}, already present ${extras.filter((x) => !x.added).length}`)
 console.log(`no city from address: ${built.unmatched.length}`)
 console.log(`same names: ${sameName.length} (in several prefectures ${crossPref.length}, twice in one prefecture ${samePref.length})`)
@@ -239,6 +287,8 @@ if (reportAt > 0 && process.argv[reportAt + 1]) {
     unmatched: built.unmatched,
     extras,
     multiName: built.multiName,
+    aliases: built.aliases,
+    keptNames: built.keptNames,
     crossPref: crossPref.map(([n, l]) => ({ name: n, stations: l.map(nameOf) })),
     samePref: samePref.map(([n, l]) => ({ name: n, stations: l.map(nameOf) })),
   }
