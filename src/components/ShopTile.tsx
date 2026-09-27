@@ -9,20 +9,31 @@ interface Props {
   /** Cover photo, SMALL size only (never load `large` in the list). */
   cover?: Blob
   onOpen: (shopId: string) => void
+  /** Selection mode (construction 8b): a tap selects / unselects instead of opening the shop. */
+  selection?: { selected: boolean; onToggle: (shopId: string) => void }
 }
 
 /** Square tile: cover photo with the name (and stars if rated) over a bottom gradient. */
-export function ShopTile({ shop, cover, onOpen }: Props) {
+export function ShopTile({ shop, cover, onOpen, selection }: Props) {
   const rated = shop.rating !== undefined
+  const base = cover ? 'tile tile-photo' : 'tile tile-nophoto'
   return (
     <button
       type="button"
-      className={cover ? 'tile tile-photo' : 'tile tile-nophoto'}
+      className={selection ? `${base} tile-selectable` : base}
       data-tone={cover ? undefined : tileToneIndex(shop.name)}
       aria-label={shop.name}
-      onClick={() => onOpen(shop.id)}
+      aria-pressed={selection ? selection.selected : undefined}
+      onClick={() => (selection ? selection.onToggle(shop.id) : onOpen(shop.id))}
     >
       {cover && <BlobImage blob={cover} alt="" className="tile-img" loading="lazy" decoding="async" />}
+      {selection && (
+        <span className="tile-check" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path d="M6 12.5l4 4 8-9" />
+          </svg>
+        </span>
+      )}
       <span className="tile-caption">
         <span className="tile-name">{shop.name}</span>
         {rated && <Stars rating={shop.rating!} />}

@@ -4,13 +4,19 @@ import { FilterPanel, type PanelKind } from '../components/filter/FilterPanel'
 import { ListTabs } from '../components/filter/ListTabs'
 import { pageScrollY } from '../components/filter/scrollLock'
 import { SORT_LABELS } from '../components/filter/sortLabels'
+import { SelectHeader } from '../components/select/SelectHeader'
+import { SelectSendBar } from '../components/select/SelectSendBar'
+import { useShopSelection } from '../components/select/useShopSelection'
+import { SendSheet } from '../components/share/SendSheet'
 import { ShopTile } from '../components/ShopTile'
+import { exportShopsCard } from '../db/exportCards'
 import { getPhoto } from '../db/photos'
 import { getSetting, setSetting } from '../db/settings'
 import { listShops } from '../db/shops'
 import { listTags } from '../db/tags'
 import type { Shop, ShopStatus, SortOrder } from '../db/types'
 import { useStationMaster } from '../hooks/useGeoMaster'
+import { CARD_FILE_TYPE } from '../lib/cardFileType'
 import { findStation, stationChoiceLabel, stationLabel } from '../lib/geo'
 import {
   emptyFilter,
@@ -23,6 +29,7 @@ import {
   type ShopFilter,
   type StationLookup,
 } from '../lib/shopFilter'
+import { allShownSelected, existingSelection, hiddenSelectedCount, sendOrder } from '../lib/shopSelection'
 import '../styles/home.css'
 import '../styles/filter.css'
 import '../styles/data.css'
@@ -102,6 +109,10 @@ export function HomeScreen({ onAdd, onOpenShop, onOpenData }: Props) {
   const [tab, setTab] = useState<ShopStatus>(lastTab)
   const [filter, setFilter] = useState<ShopFilter>(lastFilter)
   const [panel, setPanel] = useState<PanelKind>()
+  // selection mode (construction 8b): screen state only
+  const selection = useShopSelection()
+  const [sendIds, setSendIds] = useState<string[]>()
+  const delivered = useRef(false)
   // only the newest load may set the data (sort changes can overlap)
   const loadSeq = useRef(0)
 
@@ -216,8 +227,24 @@ export function HomeScreen({ onAdd, onOpenShop, onOpenData }: Props) {
   const gridStyle = { '--cols': cols } as CSSProperties
   const tabTotal = view.tabRows.length
 
+  const allIds = (data?.rows ?? []).map((r) => r.shop.id)
+  const shownIds = view.shown.map((r) => r.shop.id)
+  const selected = existingSelection(selection.selected, allIds)
+  const openSend = () => {
+    delivered.current = false
+    setSendIds(sendOrder(selected, allIds))
+  }
+  const closeSend = () => {
+    setSendIds(undefined)
+    // sent (shared or saved): back to the normal list; closed without sending: keep selecting
+    if (delivered.current) selection.finish()
+  }
+
   return (
-    <div className={`screen home-screen cols-${cols}`}>
+    <div className={`screen home-screen cols-${cols}${selection.selecting ? ' selecting' : ''}`}>
+      {selection.selecting ? (
+        <SelectHeader count={selected.length} onCancel={selection.finish} />
+      ) : (
       <header className="topbar home-topbar">
         <h1 className="topbar-title home-title">グルメカード</h1>
         <div className="home-topbar-actions">
@@ -232,6 +259,10 @@ export function HomeScreen({ onAdd, onOpenShop, onOpenData }: Props) {
             <ColumnsIcon cols={nextCols} />
             <span>{nextCols}列にする</span>
           </button>
+          {/* narrower than 390px the bar does not fit: then "選ぶ" is in the count row (select.css) */}
+          <button type="button" className="btn select-toggle select-toggle-top" onClick={selection.start} disabled={!ready}>
+            選ぶ
+          </button>
           {onOpenData && (
             <button type="button" className="btn menu-button" aria-label="メニュー" onClick={onOpenData}>
               <svg className="menu-icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -241,6 +272,7 @@ export function HomeScreen({ onAdd, onOpenShop, onOpenData }: Props) {
           )}
         </div>
       </header>
+      )}
 
       <ListTabs value={tab} counts={view.counts} onChange={changeTab} />
 
@@ -259,6 +291,20 @@ export function HomeScreen({ onAdd, onOpenShop, onOpenData }: Props) {
           {active && (
             <button type="button" className="list-clear" onClick={clearFilter}>
               条件を解除
+            </button>
+          )}
+          {selection.selecting && shownIds.length > 0 && (
+            <button
+              type="button"
+              className="list-select-all"
+              onClick={() => (allShownSelected(selected, shownIds) ? selection.unselectShown(shownIds) : selection.selectShown(shownIds))}
+            >
+              {allShownSelected(selected, shownIds) ? '表示中をすべて外す' : '表示中をすべて選ぶ'}
+            </button>
+          )}
+          {!selection.selecting && (
+            <button type="button" className="list-select select-toggle-row" onClick={selection.start}>
+              選ぶ
             </button>
           )}
           <button type="button" className="list-sort" aria-haspopup="dialog" onClick={() => setPanel('sort')}>
@@ -285,7 +331,12 @@ export function HomeScreen({ onAdd, onOpenShop, onOpenData }: Props) {
         {ready &&
           view.shown.map(({ shop, cover }) => (
             <li key={shop.id} className="tile-cell">
-              <ShopTile shop={shop} cover={cover} onOpen={onOpenShop} />
+              <ShopTile
+                shop={shop}
+                cover={cover}
+                onOpen={onOpenShop}
+                selection={selection.selecting ? { selected: selected.includes(shop.id), onToggle: selection.toggle } : undefined}
+              />
             </li>
           ))}
       </ul>
@@ -296,9 +347,24 @@ export function HomeScreen({ onAdd, onOpenShop, onOpenData }: Props) {
         </Suspense>
       )}
 
-      <button type="button" className="fab" aria-label="お店を登録" onClick={onAdd}>
-        ＋
-      </button>
+      {selection.selecting ? (
+        <SelectSendBar count={selected.length} hidden={hiddenSelectedCount(selected, shownIds)} onSend={openSend} />
+      ) : (
+        <button type="button" className="fab" aria-label="お店を登録" onClick={onAdd}>
+          ＋
+        </button>
+      )}
+
+      {sendIds && (
+        <SendSheet
+          title={`${sendIds.length}店を送る`}
+          prepare={(onProgress) => exportShopsCard(sendIds, CARD_FILE_TYPE, onProgress)}
+          onDelivered={() => {
+            delivered.current = true
+          }}
+          onClose={closeSend}
+        />
+      )}
 
       {panel && (
         <FilterPanel

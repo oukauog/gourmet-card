@@ -1,0 +1,144 @@
+/* Selection mode of the list (construction 8b, spec 4.5.3). Only applies to tiles with
+   .tile-selectable, the select bar and buttons; the normal list is untouched. */
+
+/* ---------- top bar ---------- */
+.select-toggle {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 12px;
+  background: var(--c-bg-soft);
+  color: var(--c-text);
+  font-weight: 600;
+}
+/* "選ぶ" is in the top bar from 390px; narrower (iPhone SE / mini: 375px) the title would wrap,
+   so it moves to the count row, left of the sort order (spec 4.5.3) */
+.select-toggle-row {
+  display: none;
+}
+@media (max-width: 389px) {
+  .select-toggle-top {
+    display: none;
+  }
+  .select-toggle-row {
+    display: inline-block;
+    margin-left: auto;
+  }
+  .select-toggle-row + .list-sort {
+    margin-left: 0;
+  }
+}
+.list-select {
+  min-height: 36px;
+  padding: 0 8px;
+  border: 0;
+  background: none;
+  color: var(--c-text);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.select-topbar .select-title {
+  font-size: 17px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- count row: "表示中をすべて選ぶ" ---------- */
+.list-select-all {
+  min-height: 32px;
+  padding: 0 6px;
+  border: 0;
+  background: none;
+  color: var(--c-accent);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ---------- tiles ---------- */
+/* the photo is darkened a little when selected (under the name and the check) */
+.tile-selectable::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: rgb(0 0 0 / 0);
+  transition: background 0.12s;
+  pointer-events: none;
+}
+.tile-selectable[aria-pressed='true']::before {
+  background: rgb(0 0 0 / 0.25);
+}
+.tile-selectable .tile-caption {
+  z-index: 2;
+}
+.tile-check {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  box-sizing: border-box;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: rgb(0 0 0 / 0.12);
+  /* a thin shadow so the white ring shows on bright photos too */
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 0.18),
+    0 1px 3px rgb(0 0 0 / 0.3);
+  pointer-events: none;
+}
+.cols-2 .tile-check {
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+}
+.tile-check svg {
+  width: 70%;
+  height: 70%;
+  fill: none;
+  stroke: #fff;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0;
+}
+.tile-selectable[aria-pressed='true'] .tile-check {
+  border-color: #fff;
+  background: var(--c-accent);
+}
+.tile-selectable[aria-pressed='true'] .tile-check svg {
+  opacity: 1;
+}
+
+/* ---------- bottom bar: "3店を送る" ---------- */
+.select-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 16px calc(12px + env(safe-area-inset-bottom));
+  background: rgb(255 255 255 / 0.96);
+  border-top: 1px solid var(--c-line);
+}
+.select-hidden {
+  margin: 0;
+  color: var(--c-sub);
+  font-size: 12px;
+  text-align: center;
+}
+/* keep the last row of tiles above the bar */
+.home-screen.selecting .tile-grid {
+  padding-bottom: calc(120px + env(safe-area-inset-bottom));
+}
