@@ -174,3 +174,83 @@ test('data screen: "この端末での保存" (protection, usage, how to use fro
   const v = (await page.getByTestId('data-version').boundingBox())!
   expect(v.y).toBeGreaterThan((await section.boundingBox())!.y)
 })
+
+// ---------- construction 9a: asking to keep the data ----------
+
+/** navigator.storage.persist / persisted replaced. window.__persistMode: 'false' (default) | 'true' | 'throw'. */
+async function fakePersist(page: Page) {
+  await page.addInitScript(() => {
+    const w = window as unknown as { __persistCalls: number; __persisted: boolean; __persistMode: string }
+    w.__persistCalls = 0
+    w.__persisted = false
+    w.__persistMode = 'false'
+    const storage = navigator.storage as StorageManager & { persist: () => Promise<boolean>; persisted: () => Promise<boolean> }
+    storage.persisted = async () => w.__persisted
+    storage.persist = async () => {
+      w.__persistCalls++
+      if (w.__persistMode === 'throw') throw new Error('refused')
+      const ok = w.__persistMode === 'true'
+      if (ok) w.__persisted = true
+      return ok
+    }
+  })
+}
+const persistCalls = (page: Page) => page.evaluate(() => (window as unknown as { __persistCalls: number }).__persistCalls)
+const setPersistMode = (page: Page, mode: 'false' | 'true' | 'throw') =>
+  page.evaluate((m) => {
+    ;(window as unknown as { __persistMode: string }).__persistMode = m
+  }, mode)
+
+test('persist: not asked with no shop; asked once when the list shows the first shop; not again in this run', async ({ page }) => {
+  await fakePersist(page)
+  await page.goto('/')
+  await expect(page.getByTestId('tile-grid')).toHaveAttribute('aria-busy', 'false')
+  await page.waitForTimeout(300)
+  expect(await persistCalls(page)).toBe(0)
+
+  await page.getByRole('button', { name: 'お店を登録' }).click()
+  await page.getByPlaceholder('店名（必須）').fill('最初の店')
+  await page.getByRole('button', { name: '保存', exact: true }).click()
+  await expect(page.getByRole('heading', { level: 1, name: '最初の店' })).toBeVisible()
+  await page.getByRole('button', { name: '戻る' }).click()
+  await expect(page.getByTestId('tile-grid')).toHaveAttribute('aria-busy', 'false')
+  await expect.poll(() => persistCalls(page)).toBe(1)
+
+  // shop page <-> list, twice: still once
+  for (let i = 0; i < 2; i++) {
+    await page.getByTestId('tile-grid').getByRole('button', { name: '最初の店' }).click()
+    await expect(page.getByRole('heading', { level: 1, name: '最初の店' })).toBeVisible()
+    await page.getByRole('button', { name: '戻る' }).click()
+    await expect(page.getByTestId('tile-grid')).toHaveAttribute('aria-busy', 'false')
+  }
+  await page.waitForTimeout(300)
+  expect(await persistCalls(page)).toBe(1)
+})
+
+test('persist button: never asked -> no record line; false -> "許可されませんでした" with the time; true -> protected, no button', async ({ page }) => {
+  await fakePersist(page)
+  await page.goto('/#/data') // no shop: the button still works
+  const section = page.getByRole('region', { name: 'この端末での保存' })
+  await expect(section.getByTestId('storage-persisted')).toHaveText('保護されていません')
+  await expect(section.getByTestId('persist-record')).toHaveCount(0)
+  await section.getByRole('button', { name: '保護を求める' }).click()
+  await expect(section.getByTestId('persist-record')).toHaveText(/^最後に保護を求めた日時：\d{1,2}月\d{1,2}日 \d{1,2}:\d{2}・許可されませんでした$/)
+  await expect(section.getByTestId('storage-persisted')).toHaveText('保護されていません')
+  await expect(section.getByRole('button', { name: '保護を求める' })).toBeVisible()
+
+  await setPersistMode(page, 'true')
+  await section.getByRole('button', { name: '保護を求める' }).click()
+  await expect(section.getByTestId('storage-persisted')).toHaveText('保護されています')
+  await expect(section.getByRole('button', { name: '保護を求める' })).toHaveCount(0)
+  await expect(section.getByTestId('persist-record')).toHaveText(/・許可されました$/)
+  expect(await persistCalls(page)).toBe(2)
+})
+
+test('persist button: an exception -> "失敗しました"', async ({ page }) => {
+  await fakePersist(page)
+  await page.goto('/#/data')
+  await setPersistMode(page, 'throw')
+  const section = page.getByRole('region', { name: 'この端末での保存' })
+  await section.getByRole('button', { name: '保護を求める' }).click()
+  await expect(section.getByTestId('persist-record')).toHaveText(/・失敗しました$/)
+})

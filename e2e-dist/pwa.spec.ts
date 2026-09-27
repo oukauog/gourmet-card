@@ -65,3 +65,28 @@ test('offline: the list opens and the station candidates work (the masters are p
   await expect(page.getByRole('heading', { level: 1, name: '電波の無い店' })).toBeVisible()
   await context.setOffline(false)
 })
+
+// construction 9a: the icons are the "hand of cards" (fan), not design A of construction 9
+const ICONS_OF_CONSTRUCTION_9: Record<string, string> = {
+  'apple-touch-icon.png': '01e190808679b4ec0689005a035d50d2bf98077414fedf1dbe87c90dedbb42da',
+  'pwa-192.png': '0ce6b3dd1b5f23917ee265966a36a3a5fec3bb92375d82feece48022656dcd83',
+  'pwa-512.png': '284275183011e2bbbfcc842e659a64c62e1b93070fd73d926481482df1c46fce',
+  'pwa-maskable-512.png': '284275183011e2bbbfcc842e659a64c62e1b93070fd73d926481482df1c46fce',
+}
+
+test('the icons of the manifest (and apple-touch-icon) are 200 PNGs and not the ones of construction 9', async ({ page, request }) => {
+  const { createHash } = await import('node:crypto')
+  await page.goto('./')
+  const manifestUrl = new URL((await page.locator('link[rel="manifest"]').getAttribute('href'))!, page.url()).toString()
+  const m = await (await request.get(manifestUrl)).json()
+  const names = [...m.icons.map((i: { src: string }) => i.src), 'apple-touch-icon.png']
+  expect(names.sort()).toEqual(Object.keys(ICONS_OF_CONSTRUCTION_9).sort())
+  for (const name of names) {
+    const res = await request.get(new URL(name, manifestUrl).toString())
+    expect(res.status(), name).toBe(200)
+    expect(res.headers()['content-type'], name).toContain('image/png')
+    const body = await res.body()
+    expect([...body.subarray(1, 4)].map((c) => String.fromCharCode(c)).join(''), name).toBe('PNG')
+    expect(createHash('sha256').update(body).digest('hex'), name).not.toBe(ICONS_OF_CONSTRUCTION_9[name])
+  }
+})
