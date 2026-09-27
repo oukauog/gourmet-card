@@ -14,7 +14,7 @@
     "fixtures": "node scripts/make-fixtures.mjs",
     "geo-data": "node scripts/build-geo-data.mjs",
     "e2e:dist": "playwright test -c playwright.dist.config.ts",
-    "deploy": "npm run build && gh-pages -d dist --nojekyll -m \"Deploy from the build\""
+    "deploy": "npm run build && gh-pages -d dist --dotfiles --nojekyll -m \"Deploy from the build\""
   },
   "dependencies": {
     "dexie": "^4.4.6",
